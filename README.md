@@ -1,4 +1,4 @@
-# 界环 ScopeLatch
+# ScopeLatch Agent Engineering Harness
 
 [![ScopeLatch CI](https://github.com/zzh3110296407-cmd/ScopeLatch-Agent-Engineering-Harness/actions/workflows/ci.yml/badge.svg)](https://github.com/zzh3110296407-cmd/ScopeLatch-Agent-Engineering-Harness/actions/workflows/ci.yml)
 
