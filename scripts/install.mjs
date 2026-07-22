@@ -36,9 +36,12 @@ copyFile('templates/harness-runtime.gitignore', '.harness/.gitignore');
 
 if (enableHooks) copyFile('.codex/config.example.toml', '.codex/config.toml');
 
-const agentsTarget = fs.existsSync(path.join(targetRoot, 'AGENTS.md'))
-  ? 'AGENTS.harness.md'
-  : 'AGENTS.md';
+const agentsFile = path.join(targetRoot, 'AGENTS.md');
+const agentsTemplate = path.join(packageRoot, 'templates', 'AGENTS.harness.md');
+const agentsTarget = !fs.existsSync(agentsFile)
+  || fs.readFileSync(agentsFile, 'utf8') === fs.readFileSync(agentsTemplate, 'utf8')
+  ? 'AGENTS.md'
+  : 'AGENTS.harness.md';
 copyFile('templates/AGENTS.harness.md', agentsTarget);
 
 const installed = results.filter((item) => item.status === 'installed').length;
@@ -68,12 +71,18 @@ function copyTree(sourceRel, targetRel) {
 function copyDirectory(source, target) {
   fs.mkdirSync(target, { recursive: true });
   for (const entry of fs.readdirSync(source, { withFileTypes: true })) {
+    if (isTransientPythonArtifact(entry)) continue;
     const sourceEntry = path.join(source, entry.name);
     const targetEntry = path.join(target, entry.name);
     if (entry.isDirectory()) copyDirectory(sourceEntry, targetEntry);
     else if (entry.isFile()) fs.copyFileSync(sourceEntry, targetEntry);
     else fail(`Unsupported filesystem entry: ${sourceEntry}`);
   }
+}
+
+function isTransientPythonArtifact(entry) {
+  if (entry.isDirectory()) return entry.name === '__pycache__';
+  return entry.isFile() && (entry.name.endsWith('.pyc') || entry.name.endsWith('.pyo'));
 }
 
 function copyFile(sourceRel, targetRel) {

@@ -15,8 +15,7 @@ export function buildContextPack({ root, taskInfo, files, config }) {
     : candidates;
 
   const mentioned = taskInfo.fileMentions
-    .map((f) => resolveMention(f, filtered, config))
-    .filter(Boolean);
+    .map((f) => resolveMention(f, filtered, config) || normalizePath(f));
 
   const agentFiles = filtered.filter((f) => /(^|\/)AGENTS\.md$/i.test(f));
   const docs = pickDocs(filtered, taskInfo.tokens, config, retrievalProfile);
@@ -54,6 +53,7 @@ export function buildContextPack({ root, taskInfo, files, config }) {
     intent: taskInfo.intent,
     tokens: taskInfo.tokens,
     riskHints: taskInfo.riskHints,
+    mentionedFiles: mentioned,
     mustRead,
     relatedFiles,
     relatedTests,
@@ -241,13 +241,6 @@ function resolveRetrievalProfile(taskInfo, controlPlane = {}) {
   const taskTokens = new Set((taskInfo.tokens || []).map((token) => String(token).toLowerCase()));
   const activationTokens = controlPlane.taskTokens || ['harness'];
   const active = activationTokens.some((token) => taskTokens.has(String(token).toLowerCase()) && String(token).toLowerCase() === 'harness');
-  if (!active) {
-    return {
-      id: 'project-source',
-      matches: () => true,
-      weight: () => 0
-    };
-  }
   const patterns = controlPlane.pathPatterns || [
     'harness/**',
     '.harness/**',
@@ -255,9 +248,17 @@ function resolveRetrievalProfile(taskInfo, controlPlane = {}) {
     '.github/workflows/**',
     'AGENTS.md'
   ];
+  const matches = (file) => matchesAny(file, patterns);
+  if (!active) {
+    const controlPlanePenalty = Math.min(-60, Number(controlPlane.outsidePenalty ?? -120));
+    return {
+      id: 'project-source',
+      matches: (file) => !matches(file),
+      weight: (file) => matches(file) ? controlPlanePenalty : 0
+    };
+  }
   const activeBonus = Number(controlPlane.activeBonus ?? 120);
   const outsidePenalty = Number(controlPlane.outsidePenalty ?? -120);
-  const matches = (file) => matchesAny(file, patterns);
   return {
     id: 'harness-control-plane',
     matches,

@@ -7,8 +7,12 @@ import { buildRequiredSynchronizations } from './synchronizations.mjs';
 export function analyzeImpact({ root, taskInfo, contextPack, files, config, baseRef = null, includeWorkingTreeChanges = false }) {
   const filtered = filterRepoFiles(files, config);
   const changed = includeWorkingTreeChanges ? changedFiles(root, baseRef).filter((f) => filtered.includes(f)) : [];
+  const inferredTargets = contextPack.mustRead.filter((f) => !/(^|\/)AGENTS\.md$/i.test(f));
+  const scopedTargets = contextPack.mentionedFiles?.length
+    ? contextPack.mentionedFiles
+    : inferredTargets;
   const directTargets = unique([
-    ...contextPack.mustRead.filter((f) => !/(^|\/)AGENTS\.md$/i.test(f)),
+    ...scopedTargets,
     ...changed
   ]).slice(0, 50);
 

@@ -313,15 +313,17 @@ export function buildConfigHealth({ root, config }) {
     const configured = config.commands?.[id];
     const command = resolveScriptCommand(root, config.packageManager, pkg, configured, candidates);
     const explicit = configured !== undefined && configured !== 'auto';
+    const disabled = configured === 'none' || configured === false;
     return {
       id,
       configured: configured === undefined ? null : configured,
       explicit,
+      disabled,
       available: Boolean(command),
       command
     };
   });
-  const unresolvedCommands = commandResults.filter((c) => !c.available);
+  const unresolvedCommands = commandResults.filter((c) => !c.available && !c.disabled);
   const autoCommands = commandResults.filter((c) => !c.explicit);
   addCheck(
     checks,
@@ -329,7 +331,7 @@ export function buildConfigHealth({ root, config }) {
     unresolvedCommands.length === 0 && autoCommands.length === 0,
     unresolvedCommands.length || autoCommands.length
       ? `Unresolved commands: ${unresolvedCommands.map((c) => c.id).join(', ') || 'none'}; auto commands: ${autoCommands.map((c) => c.id).join(', ') || 'none'}`
-      : 'All primary validation commands are explicit and resolvable.'
+      : 'All primary validation commands are explicit and either resolvable or intentionally disabled.'
   );
   const phaseBoundCommands = commandResults.filter((item) => /(?:verify_|run_)?phase\d|phase-\d/i.test(item.command || ''));
   addCheck(
