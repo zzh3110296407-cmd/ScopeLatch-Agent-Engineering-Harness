@@ -1,0 +1,7 @@
+harness.config.json
+runs/
+state/
+cache/
+security/
+knowledge/failures.jsonl
+knowledge/rule-candidates.yaml

@@ -1,0 +1,97 @@
+{
+  "repoName": "Agent Engineering Harness",
+  "packageManager": "npm",
+  "outputDir": ".harness/runs",
+  "stateDir": ".harness/state",
+  "policy": {
+    "planMaxAgeMinutes": 240,
+    "requireSessionBinding": true
+  },
+  "performance": {
+    "guardHashCache": true,
+    "guardHashCacheMaxEntries": 5000,
+    "postToolBudgetP95Ms": 350,
+    "benchmarkIterations": 20,
+    "benchmarkWarmupIterations": 3
+  },
+  "security": {
+    "profile": "public-release",
+    "scanSecrets": true,
+    "scanHighEntropy": true,
+    "scanLocalAbsolutePaths": true,
+    "requireLicenseForRelease": true,
+    "maxFileBytesToScan": 500000,
+    "entropyThreshold": 4.2,
+    "entropyMinLength": 20,
+    "historyMaxCommits": 100,
+    "historyCommitTimeoutMs": 15000,
+    "historyMaxBytesPerCommit": 5242880,
+    "dependencyAuditTimeoutMs": 120000,
+    "licenseFileNames": ["LICENSE", "LICENSE.md", "LICENSE.txt", "COPYING"]
+  },
+  "context": {
+    "maxMustReadFiles": 24,
+    "maxRelatedFiles": 24,
+    "maxRelatedTests": 16,
+    "maxFileBytesToScan": 220000,
+    "controlPlane": {
+      "taskTokens": ["harness", "codex", "guard", "closeout"],
+      "pathPatterns": ["harness/**", ".harness/**", ".codex/hooks/**", ".github/workflows/**", "AGENTS.md"],
+      "activeBonus": 120,
+      "outsidePenalty": -120
+    },
+    "sourcePriority": {
+      "autoDetectCanonicalSource": false,
+      "canonicalSourceRoot": ".",
+      "phaseSearchRoot": "versions",
+      "canonicalMarkers": ["harness/lib", "harness/tests"],
+      "authorityManifestPath": ".harness/source-authority.json",
+      "requireAuthorityManifest": true,
+      "activeSourceRoots": ["harness/**", ".codex/**", ".harness/**", "scripts/**", "docs/**", "AGENTS.md"],
+      "referenceSourceRoots": ["examples/**", "docs/**"],
+      "historicalPathPatterns": ["**/archive/**", "**/archives/**", "versions/Phase */**"],
+      "generatedPathPatterns": ["**/generated/**", "**/*_report.json", "**/*validation-report*"],
+      "activeBonus": 50,
+      "referenceBonus": 8,
+      "historicalPenalty": -80,
+      "generatedPenalty": -80,
+      "deduplicateExactContent": true,
+      "includeGeneratedInMustRead": false,
+      "preferActiveTests": true
+    },
+    "excludePathPatterns": [
+      "**/node_modules/**", "**/.git/**", "**/dist/**", "**/build/**", "**/.next/**",
+      "**/coverage/**", "**/vendor/**", "**/.turbo/**", "**/.cache/**",
+      "**/__pycache__/**", "**/.venv/**", "**/venv/**", "**/.playwright-cli/**",
+      "**/.harness/runs/**", "**/.harness/state/**", "**/.harness/cache/**",
+      "**/.harness/security/**", "**/.codex/hooks/__pycache__/**",
+      ".harness/runs/**", ".harness/state/**", ".harness/cache/**",
+      ".harness/security/**", ".codex/hooks/__pycache__/**"
+    ]
+  },
+  "changeBudget": {
+    "maxRepairRounds": 3,
+    "forbiddenDirs": ["secrets", ".harness/runs", ".harness/state", ".harness/cache", ".harness/security"],
+    "escalateOn": ["public-api-change", "database-migration", "auth-change", "payment-change", "permission-change", "build-system-change"]
+  },
+  "riskRules": {
+    "publicApiPatterns": ["**/api/**", "**/routes/**", "**/schema/**", "**/*openapi*", "**/*.graphql", "**/*.proto"],
+    "databasePatterns": ["**/database/**", "**/migrations/**", "**/schema.sql", "**/prisma/**", "**/drizzle/**", "**/models/**", "**/storage/**", "**/repositories/**"],
+    "authPatterns": ["**/auth/**", "**/authorization/**", "**/permissions/**", "**/rbac/**", "**/session/**"],
+    "paymentPatterns": ["**/payment/**", "**/billing/**", "**/refund/**", "**/ledger/**", "**/settlement/**", "**/balance/**"],
+    "sharedPatterns": ["**/shared/**", "**/common/**", "**/utils/**", "**/types/**", "**/packages/**"],
+    "buildSystemPatterns": ["package.json", "pnpm-lock.yaml", "yarn.lock", "package-lock.json", "turbo.json", "nx.json", "vite.config.*", "webpack.config.*", "tsconfig*.json", ".github/workflows/**", ".codex/**", "harness/**", ".harness/harness.config.json"]
+  },
+  "commands": {
+    "lint": "node harness/validators/run.mjs lint",
+    "typecheck": "node harness/validators/run.mjs typecheck",
+    "test": "none",
+    "testUnit": "node harness/validators/run.mjs testUnit",
+    "testIntegration": "node harness/validators/run.mjs testIntegration",
+    "testContract": "node harness/validators/run.mjs testContract",
+    "testE2E": "node harness/validators/run.mjs testE2E",
+    "build": "node harness/validators/run.mjs build",
+    "generateClient": "node harness/validators/run.mjs generateClient",
+    "fullCI": "node harness/validators/run.mjs fullCI"
+  }
+}

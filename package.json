@@ -1,0 +1,29 @@
+{
+  "name": "agent-engineering-harness",
+  "version": "3.3.0",
+  "description": "A repository-aware control plane for AI coding agents with scoped plans, guarded writes, validation, repair, and security checks.",
+  "type": "module",
+  "private": true,
+  "license": "Apache-2.0",
+  "author": "Zihang Zhong",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "test": "node harness/tests/run-all.mjs",
+    "harness": "node harness/cli.mjs",
+    "status": "node harness/cli.mjs status",
+    "index": "node harness/cli.mjs index",
+    "security": "node harness/cli.mjs security --profile public-release",
+    "sandbox:verify": "node harness/cli.mjs sandbox --verify --build",
+    "install:target": "node scripts/install.mjs"
+  },
+  "keywords": [
+    "ai-agent",
+    "codex",
+    "harness",
+    "guardrails",
+    "code-review",
+    "validation"
+  ]
+}

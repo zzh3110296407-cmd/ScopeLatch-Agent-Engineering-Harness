@@ -1,0 +1,42 @@
+name: Bug report
+description: Report reproducible incorrect Harness behavior.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: Do not include credentials, private repository content, or unredacted security reports.
+  - type: input
+    id: version
+    attributes:
+      label: Harness version
+      placeholder: 3.3.0
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options: [Windows, Linux, macOS, Other]
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Actual behavior
+      description: Include the command, redacted output, and exit status.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Use a public or synthetic repository when possible.
+    validations:
+      required: true

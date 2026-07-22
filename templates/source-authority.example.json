@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "status": "ready",
+  "root": "src",
+  "phase": "1.0",
+  "requiredMarkers": ["backend", "frontend"],
+  "readinessFiles": ["backend/main.py", "frontend/package.json"],
+  "validationProfile": {
+    "schemaVersion": 1,
+    "commands": {
+      "lint": [
+        {"cwd": "repo", "command": "npm", "args": ["run", "lint"]}
+      ],
+      "typecheck": [
+        {"cwd": "repo", "command": "npm", "args": ["run", "typecheck"]}
+      ],
+      "testUnit": [
+        {"cwd": "repo", "command": "npm", "args": ["run", "test:unit"]}
+      ],
+      "testIntegration": [
+        {"cwd": "repo", "command": "npm", "args": ["run", "test:integration"]}
+      ],
+      "testContract": [
+        {"cwd": "repo", "command": "npm", "args": ["run", "test:contract"]}
+      ],
+      "testE2E": [
+        {"cwd": "repo", "command": "npm", "args": ["run", "test:e2e"]}
+      ],
+      "build": [
+        {"cwd": "repo", "command": "npm", "args": ["run", "build"]}
+      ],
+      "fullCI": [
+        {"cwd": "repo", "command": "npm", "args": ["run", "ci"]}
+      ]
+    }
+  }
+}

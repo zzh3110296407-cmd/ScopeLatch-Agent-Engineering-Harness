@@ -1,0 +1,11 @@
+{
+  "name": "agent-engineering-harness",
+  "version": "3.3.0",
+  "releasedAt": "2026-07-22",
+  "runManifestSchemaVersion": 4,
+  "sourceAuthoritySchemaVersion": 2,
+  "ruleReviewSchemaVersion": 1,
+  "securityReportSchemaVersion": 2,
+  "failureKnowledgeSchemaVersion": 4,
+  "sandboxVerificationSchemaVersion": 1
+}

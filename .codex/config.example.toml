@@ -1,0 +1,32 @@
+# Copy this file to .codex/config.toml after reviewing hook behavior.
+# Codex discovers project config from .codex/config.toml in trusted projects.
+# Commands are intentionally relative to the repository root so they work on Windows.
+
+[features]
+hooks = true
+
+[[hooks.PreToolUse]]
+matcher = '^(Bash|Shell|exec_command|functions\.exec_command|apply_patch|functions\.apply_patch)$'
+
+[[hooks.PreToolUse.hooks]]
+type = "command"
+command = 'python .codex/hooks/pre_tool_use_policy.py'
+timeout = 30
+statusMessage = "Harness: checking shell command"
+
+[[hooks.PostToolUse]]
+matcher = '^(Bash|Shell|exec_command|functions\.exec_command|apply_patch|functions\.apply_patch)$'
+
+[[hooks.PostToolUse.hooks]]
+type = "command"
+command = 'python .codex/hooks/post_tool_use_guard.py'
+timeout = 60
+statusMessage = "Harness: verifying repository side effects"
+
+[[hooks.Stop]]
+
+[[hooks.Stop.hooks]]
+type = "command"
+command = 'python .codex/hooks/stop_guard.py'
+timeout = 30
+statusMessage = "Harness: checking validation state"

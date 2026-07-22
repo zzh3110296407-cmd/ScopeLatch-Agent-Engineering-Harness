@@ -1,0 +1,38 @@
+# Local Harness configuration and generated runtime state
+.harness/harness.config.json
+.harness/runs/
+.harness/state/
+.harness/cache/
+.harness/security/
+.harness/knowledge/failures.jsonl
+.harness/knowledge/rule-candidates.yaml
+
+# Local agent state
+.codex/hooks/__pycache__/
+.codex/*.local.toml
+
+# Dependencies, build output, and test artifacts
+node_modules/
+dist/
+build/
+coverage/
+*.log
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Secrets and machine-local settings
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Editors and operating systems
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+desktop.ini

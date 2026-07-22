@@ -1,0 +1,30 @@
+name: Feature request
+description: Propose a focused Harness capability or policy improvement.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Engineering problem
+      description: Describe the failure mode or workflow gap, not only the desired command.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence and alternatives
+      description: Include reproducible examples, risks, and rejected alternatives.
+  - type: checkboxes
+    id: boundary
+    attributes:
+      label: Scope acknowledgement
+      options:
+        - label: I understand Harness is not an operating-system sandbox.
+          required: true

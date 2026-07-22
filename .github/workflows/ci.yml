@@ -1,0 +1,91 @@
+name: Harness CI
+
+on:
+  pull_request:
+    paths:
+      - "harness/**"
+      - ".codex/hooks/**"
+      - ".harness/**"
+      - "scripts/**"
+      - "templates/**"
+      - "docs/**"
+      - "AGENTS.md"
+      - "README*.md"
+      - "package.json"
+      - ".github/workflows/ci.yml"
+  push:
+    branches:
+      - main
+      - "codex/**"
+    paths:
+      - "harness/**"
+      - ".codex/hooks/**"
+      - ".harness/**"
+      - "scripts/**"
+      - "templates/**"
+      - "docs/**"
+      - "AGENTS.md"
+      - "README*.md"
+      - "package.json"
+      - ".github/workflows/ci.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: harness-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  harness:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - name: Enable Git long paths before checkout
+        shell: pwsh
+        run: git config --global core.longpaths true
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Initialize local Harness config
+        run: node harness/cli.mjs init
+      - name: Run Harness tests and hook compilation
+        run: npm test
+      - name: Build repository indexes
+        run: node harness/cli.mjs index
+      - name: Verify source authority and configuration
+        run: node harness/cli.mjs status
+      - name: Verify configured source checks
+        run: node harness/validators/run.mjs typecheck
+      - name: Scan public release package
+        run: node harness/cli.mjs security --profile public-release
+      - name: Upload Harness security report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: harness-security-report
+          path: .harness/security/latest-security-report.json
+          if-no-files-found: error
+
+  sandbox:
+    needs: harness
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+      - name: Build and verify hardened Harness sandbox
+        run: node harness/cli.mjs sandbox --verify --build
+      - name: Upload sandbox verification report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: harness-sandbox-verification
+          path: .harness/cache/sandbox/latest-runtime-verification.json
+          if-no-files-found: error

@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "status": "ready",
+  "root": ".",
+  "phase": "3.3",
+  "declaredAt": "2026-07-22",
+  "requiredMarkers": ["harness/lib", "harness/tests"],
+  "readinessFiles": [
+    "harness/cli.mjs",
+    "harness/version.json",
+    ".codex/hooks/pre_tool_use_policy.py",
+    ".codex/hooks/post_tool_use_guard.py",
+    ".codex/hooks/stop_guard.py"
+  ],
+  "validationProfile": {
+    "schemaVersion": 1,
+    "commands": {
+      "lint": [
+        {"cwd": "repo", "command": "node", "args": ["--check", "harness/cli.mjs"]}
+      ],
+      "typecheck": [
+        {"cwd": "repo", "command": "python", "args": ["-B", "-m", "py_compile", ".codex/hooks/pre_tool_use_policy.py", ".codex/hooks/post_tool_use_guard.py", ".codex/hooks/stop_guard.py"]}
+      ],
+      "testUnit": [
+        {"cwd": "repo", "command": "node", "args": ["harness/tests/run-all.mjs"]}
+      ],
+      "testIntegration": [
+        {"cwd": "repo", "command": "node", "args": ["harness/tests/run-command.test.mjs"]}
+      ],
+      "testContract": [
+        {"cwd": "repo", "command": "node", "args": ["harness/tests/hooks-policy.test.mjs"]}
+      ],
+      "testE2E": [
+        {"cwd": "repo", "command": "node", "args": ["harness/tests/codex-process-e2e.test.mjs"]}
+      ],
+      "build": [
+        {"cwd": "repo", "command": "node", "args": ["harness/cli.mjs", "version"]}
+      ],
+      "generateClient": [
+        {"cwd": "repo", "command": "node", "args": ["--check", "harness/cli.mjs"]}
+      ],
+      "fullCI": [
+        {"cwd": "repo", "command": "node", "args": ["harness/tests/run-all.mjs"]}
+      ]
+    }
+  }
+}
