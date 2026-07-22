@@ -1,23 +1,30 @@
-# Security Policy
+# 安全政策
 
-## Supported Version
+## 支持版本
 
-Security fixes are applied to the latest released minor version. Older snapshots may not receive patches.
+安全修复应用于最新发布的小版本；较旧快照可能不会继续获得补丁。
 
-## Reporting a Vulnerability
+## 报告漏洞
 
-Use GitHub Private Vulnerability Reporting for the repository when available. Do not open a public issue for an unpatched vulnerability or include credentials, exploit payloads, private repository content, or user data in public discussion.
+优先使用 GitHub Private Vulnerability Reporting。未修复漏洞请勿提交公开 Issue，也不要在公开讨论中包含凭据、可直接利用的攻击载荷、私有仓库内容、用户数据或未脱敏安全报告。
 
-Include the affected version, component, reproduction conditions, impact, and a minimal safe proof of concept. Maintainers will acknowledge the report, validate severity, coordinate a fix, and publish an advisory when appropriate.
+报告中请包含：
 
-## Important Boundary
+- 受影响版本与组件；
+- 最小复现条件；
+- 可能影响；
+- 经过脱敏的安全概念验证。
 
-Harness is not an operating-system sandbox. Hook enforcement depends on supported agent events and trusted repository configuration. Diff Guard detects repository changes visible to Git, while the optional Docker sandbox supplies stronger process isolation for untrusted commands.
+维护者会确认报告、验证严重程度、协调修复，并在合适时发布安全公告。
 
-Before publishing a fork or release, run:
+## 重要边界
+
+ScopeLatch 不是操作系统级沙箱。Hook 强制能力依赖智能体平台提供受支持的工具事件和可信仓库配置；Diff Guard 只能观察 Git 可见的仓库变化。可选 Docker 沙箱为不可信命令提供更强隔离，但仍不能替代宿主机安全措施。
+
+发布 Fork 或新版本前请运行：
 
 ```bash
 node harness/cli.mjs security --profile public-release
 ```
 
-Security reports intentionally omit discovered secret values. If a real credential is ever committed, revoke it immediately and clean Git history; deleting it only from the latest file is insufficient.
+安全报告不会保存检测到的密钥原文。真实凭据一旦进入 Git 历史，应立即撤销并清理历史；只删除当前文件中的密钥并不足够。

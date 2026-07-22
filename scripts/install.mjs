@@ -43,7 +43,7 @@ copyFile('templates/AGENTS.harness.md', agentsTarget);
 
 const installed = results.filter((item) => item.status === 'installed').length;
 const skipped = results.filter((item) => item.status === 'skipped').length;
-console.log(`Harness installation complete: ${installed} installed, ${skipped} preserved.`);
+console.log(`ScopeLatch installation complete: ${installed} installed, ${skipped} preserved.`);
 console.log(`Target: ${targetRoot}`);
 console.log('Next: review .harness/harness.config.json, then run `node harness/cli.mjs status`.');
 if (!enableHooks) {
@@ -103,7 +103,7 @@ function fail(message) {
 }
 
 function printHelp() {
-  console.log(`Agent Engineering Harness installer
+  console.log(`ScopeLatch Agent Engineering Harness installer
 
 Usage:
   node scripts/install.mjs --target <repository-path> [--enable-hooks] [--force]

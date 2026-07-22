@@ -1,4 +1,4 @@
-name: Harness CI
+name: ScopeLatch CI
 
 on:
   pull_request:
@@ -10,7 +10,9 @@ on:
       - "templates/**"
       - "docs/**"
       - "AGENTS.md"
-      - "README*.md"
+      - "*.md"
+      - "LICENSE"
+      - "NOTICE"
       - "package.json"
       - ".github/workflows/ci.yml"
   push:
@@ -25,7 +27,9 @@ on:
       - "templates/**"
       - "docs/**"
       - "AGENTS.md"
-      - "README*.md"
+      - "*.md"
+      - "LICENSE"
+      - "NOTICE"
       - "package.json"
       - ".github/workflows/ci.yml"
 
@@ -33,7 +37,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: harness-ci-${{ github.ref }}
+  group: scopelatch-ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -51,9 +55,9 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
-      - name: Initialize local Harness config
+      - name: Initialize local ScopeLatch config
         run: node harness/cli.mjs init
-      - name: Run Harness tests and hook compilation
+      - name: Run ScopeLatch tests and hook compilation
         run: npm test
       - name: Build repository indexes
         run: node harness/cli.mjs index
@@ -63,11 +67,11 @@ jobs:
         run: node harness/validators/run.mjs typecheck
       - name: Scan public release package
         run: node harness/cli.mjs security --profile public-release
-      - name: Upload Harness security report
+      - name: Upload ScopeLatch security report
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: harness-security-report
+          name: scopelatch-security-report
           path: .harness/security/latest-security-report.json
           if-no-files-found: error
 
@@ -80,12 +84,12 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: "24"
-      - name: Build and verify hardened Harness sandbox
+      - name: Build and verify hardened ScopeLatch sandbox
         run: node harness/cli.mjs sandbox --verify --build
       - name: Upload sandbox verification report
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: harness-sandbox-verification
+          name: scopelatch-sandbox-verification
           path: .harness/cache/sandbox/latest-runtime-verification.json
           if-no-files-found: error

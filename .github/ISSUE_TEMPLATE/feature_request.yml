@@ -1,30 +1,30 @@
-name: Feature request
-description: Propose a focused Harness capability or policy improvement.
-title: "[Feature]: "
+name: 功能建议
+description: 提议聚焦的 ScopeLatch 能力或策略改进。
+title: "[功能]: "
 labels: ["enhancement"]
 body:
   - type: textarea
     id: problem
     attributes:
-      label: Engineering problem
-      description: Describe the failure mode or workflow gap, not only the desired command.
+      label: 工程问题
+      description: 请描述失败模式或工作流缺口，而不只是期望增加的命令。
     validations:
       required: true
   - type: textarea
     id: proposal
     attributes:
-      label: Proposed behavior
+      label: 建议行为
     validations:
       required: true
   - type: textarea
     id: evidence
     attributes:
-      label: Evidence and alternatives
-      description: Include reproducible examples, risks, and rejected alternatives.
+      label: 证据与替代方案
+      description: 请提供可复现示例、风险和已经排除的方案。
   - type: checkboxes
     id: boundary
     attributes:
-      label: Scope acknowledgement
+      label: 边界确认
       options:
-        - label: I understand Harness is not an operating-system sandbox.
+        - label: 我理解 ScopeLatch 不是操作系统级沙箱。
           required: true

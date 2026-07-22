@@ -1,6 +1,6 @@
 # Repository Agent Rules
 
-These rules apply to the Agent Engineering Harness repository.
+These rules apply to the ScopeLatch Agent Engineering Harness repository.
 
 ## Required Workflow
 

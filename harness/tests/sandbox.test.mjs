@@ -6,7 +6,7 @@ import { buildSandboxInvocation, sandboxVerificationCommands } from '../lib/sand
 const root = path.resolve('test-fixtures/sample-project');
 const invocation = buildSandboxInvocation({
   root,
-  image: 'agent-engineering-harness-sandbox:3.2.0',
+  image: 'scopelatch-harness-sandbox:3.2.0',
   command: ['node', 'harness/cli.mjs', 'status']
 });
 
@@ -22,7 +22,7 @@ assert.equal(invocation.shell, false);
 
 const writableInvocation = buildSandboxInvocation({
   root,
-  image: 'agent-engineering-harness-sandbox:3.3.0',
+  image: 'scopelatch-harness-sandbox:3.3.0',
   workspaceWritable: true,
   command: ['node', 'harness/cli.mjs', 'status']
 });

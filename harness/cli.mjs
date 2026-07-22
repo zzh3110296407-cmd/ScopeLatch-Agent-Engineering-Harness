@@ -75,7 +75,7 @@ async function main() {
 }
 
 function help() {
-  console.log(`Agent Engineering Harness
+  console.log(`ScopeLatch Agent Engineering Harness
 
 Usage:
   node harness/cli.mjs plan "<task>"

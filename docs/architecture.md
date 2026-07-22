@@ -1,46 +1,46 @@
-# Architecture
+# 架构设计
 
-## Design Goal
+## 设计目标
 
-Agent Engineering Harness turns an unconstrained repository task into a bounded, evidence-backed execution lifecycle. It does not replace tests, code review, CI, or operating-system isolation; it coordinates and verifies them.
+ScopeLatch 将不受约束的仓库任务转化为有边界、有证据的执行生命周期。它不替代测试、代码审查、CI 或操作系统隔离，而是负责把这些能力编排成可验证的工程闭环。
 
-## Control Flow
+## 控制流程
 
-1. `task.mjs` extracts intent, file mentions, domain terms, and risk hints.
-2. `indexer.mjs` and `source-authority.mjs` identify repository files, ownership, tests, imports, and the authoritative source root.
-3. `context-builder.mjs` ranks active source above reference, historical, duplicate, and generated content.
-4. `impact-analyzer.mjs` identifies direct targets, reverse dependencies, risk signals, and required synchronization domains.
-5. `validation-planner.mjs` maps impact and L1-L4 risk to available checks.
-6. `session-binding.mjs` binds a write lease to the task fingerprint, session fingerprint, branch, commit, expiry, baseline, and allowed scope.
-7. Codex Hooks apply the lease before tools run, inspect visible side effects after tools run, and deny stopping before required closeout.
-8. `guard.mjs` compares worktree changes with the plan and checks protected boundaries.
-9. `validator.mjs` executes the planned validation graph through structured commands without shell interpolation.
-10. `closeout.mjs` performs Guard, validation, a second Guard, reporting, metrics, and failure-knowledge handling.
-11. `repair.mjs` allows at most the configured number of focused repair rounds.
+1. `task.mjs` 从任务中提取意图、文件指向、业务域和风险信号。
+2. `indexer.mjs` 与 `source-authority.mjs` 识别仓库文件、测试、导入关系和权威源码根。
+3. `context-builder.mjs` 对正式源码、参考资料、历史副本、重复内容和生成文件进行排序。
+4. `impact-analyzer.mjs` 计算直接目标、反向依赖、风险信号和跨模块同步要求。
+5. `validation-planner.mjs` 根据影响面和 L1-L4 风险生成可执行验证图。
+6. `session-binding.mjs` 将写入租约绑定到任务、会话、分支、提交、有效期、基线和允许范围。
+7. Codex Hook 在工具执行前检查授权，在执行后核对副作用，并在闭环未完成时阻止停止。
+8. `guard.mjs` 将实际工作区变化与计划比较，并检查受保护边界。
+9. `validator.mjs` 通过结构化参数执行验证命令，不进行 shell 字符串插值。
+10. `closeout.mjs` 依次执行 Guard、验证、第二次 Guard、报告、指标和失败知识处理。
+11. `repair.mjs` 在配置允许的轮数内执行聚焦修复，避免无限返工。
 
-## Trust Boundaries
+## 信任边界
 
-- **Repository configuration:** trusted policy input; review changes like code.
-- **Task and agent output:** untrusted until scoped and validated.
-- **Tool commands:** constrained by Hook parsing and execution policy, but not physically isolated.
-- **Git worktree:** evidence source for Guard; non-Git side effects may require additional monitoring.
-- **External providers:** credentials and raw payloads must remain outside tracked reports.
-- **Docker sandbox:** optional stronger isolation for command execution, still not a substitute for host hardening.
+- **仓库配置：** 作为可信策略输入，变更时必须按代码审查。
+- **任务与智能体输出：** 在完成范围约束和验证前均视为不可信。
+- **工具命令：** 受 Hook 解析和策略限制，但并未获得物理隔离。
+- **Git 工作区：** 是 Guard 的主要证据来源；仓库外副作用需要其它监控手段。
+- **外部服务：** 凭据和原始载荷不得进入被跟踪的报告或上下文包。
+- **Docker 沙箱：** 提供可选的更强进程隔离，但不替代宿主机加固。
 
-## State Model
+## 状态模型
 
-Tracked configuration belongs in `.harness/*.json`, `.codex/`, and project rules. Generated state belongs in `.harness/runs`, `.harness/state`, `.harness/cache`, `.harness/security`, and failure logs; these paths must remain ignored.
+公开且需要版本控制的策略位于 `.harness/*.json`、`.codex/` 和项目规则中。运行生成的 `runs`、`state`、`cache`、`security`、失败日志和候选规则必须保持忽略。
 
-Run manifests use schema-versioned artifacts and progress through planned, guarded, validated, reported, complete, failed, or blocked states. Commits are denied until the active session-bound run is complete.
+运行清单使用带版本号的数据结构，状态会在 `planned`、`guarded`、`validated`、`reported`、`complete`、`failed` 或 `blocked` 之间推进。活动会话绑定的运行未完成前，Hook 会拒绝提交。
 
-## Extensibility
+## 扩展方式
 
-Repository adoption is configuration-first:
+ScopeLatch 采用配置优先的接入方式：
 
-- source authority and readiness markers;
-- active/reference/historical/generated path groups;
-- risk patterns and forbidden paths;
-- explicit validation capabilities;
-- reviewed project rules.
+- 声明权威源码与就绪标记；
+- 配置正式、参考、历史和生成文件路径；
+- 配置风险模式和禁止写入目录；
+- 为项目提供明确的验证能力；
+- 维护经过人工审查的项目规则。
 
-The bundled task vocabulary and synchronization domains include generic web, API, storage, model-runtime, and narrative-system concepts. Projects can extend these modules or contribute a future external domain-pack interface.
+内置任务词汇和同步域覆盖 Web、API、前端、存储、鉴权、支付、模型运行时和叙事系统。其它项目可以扩展现有模块，或在未来接入独立领域包。

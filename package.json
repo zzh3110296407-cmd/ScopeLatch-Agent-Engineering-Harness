@@ -1,16 +1,25 @@
 {
-  "name": "agent-engineering-harness",
+  "name": "scopelatch-agent-engineering-harness",
   "version": "3.3.0",
-  "description": "A repository-aware control plane for AI coding agents with scoped plans, guarded writes, validation, repair, and security checks.",
+  "description": "ScopeLatch is a repository-aware engineering control plane for AI coding agents.",
   "type": "module",
   "private": true,
   "license": "Apache-2.0",
   "author": "Zihang Zhong",
+  "homepage": "https://github.com/zzh3110296407-cmd/ScopeLatch-Agent-Engineering-Harness#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zzh3110296407-cmd/ScopeLatch-Agent-Engineering-Harness.git"
+  },
+  "bugs": {
+    "url": "https://github.com/zzh3110296407-cmd/ScopeLatch-Agent-Engineering-Harness/issues"
+  },
   "engines": {
     "node": ">=24"
   },
   "scripts": {
     "test": "node harness/tests/run-all.mjs",
+    "scopelatch": "node harness/cli.mjs",
     "harness": "node harness/cli.mjs",
     "status": "node harness/cli.mjs status",
     "index": "node harness/cli.mjs index",
@@ -19,6 +28,7 @@
     "install:target": "node scripts/install.mjs"
   },
   "keywords": [
+    "scopelatch",
     "ai-agent",
     "codex",
     "harness",

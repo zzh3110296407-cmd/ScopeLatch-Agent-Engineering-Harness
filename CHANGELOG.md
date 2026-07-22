@@ -1,26 +1,38 @@
-# Changelog
+# 变更记录
 
-All notable changes to this project are documented here.
+本文件记录 ScopeLatch 的重要变更。
 
-## [3.3.0] - 2026-07-22
+## 未发布
 
-### Added
+### 调整
 
-- Session-bound task leases tied to task fingerprint, branch, commit, baseline, expiry, and impact scope.
-- PostToolUse side-effect inspection and complete Codex process closeout.
-- Source-authority manifests and phase-neutral validation entrypoints.
-- Structured failure signatures, candidate review, and promoted rule handling.
-- Public-release scans for current files, Git history, dependency vulnerabilities, local paths, and licenses.
-- Hardened Docker sandbox verification and explicit write opt-in.
-- P50/P95 PostToolUse performance benchmarking and hash caching.
-- Standalone installer, bilingual README, public CI, and open-source governance files.
+- 将项目名称、CLI、安装器、Docker 沙箱镜像和公开元数据统一为 ScopeLatch。
+- 重排公开文档，补充快速开始、目录说明和安全边界。
+- 将维护者发布清单移动到 `docs/maintainers/`，减少根目录噪声。
 
-### Changed
+### 清理
 
-- Extracted the Harness from its original application repository into an independent package.
-- Replaced product-specific defaults and paths with portable repository defaults.
+- 删除尚无有效记录的稳定失败规则与规则审核占位文件；后续产生真实审核记录时再由 ScopeLatch 创建。
 
-### Security
+## 3.3.0 - 2026-07-22
 
-- Security reports store finding metadata and file paths, never discovered credential values.
-- Codex hooks deny destructive commands, stale or mismatched write leases, and commits before successful closeout.
+### 新增
+
+- 与任务指纹、会话、分支、提交、基线、有效期和影响范围绑定的写入租约。
+- `PostToolUse` 副作用检查和完整 Codex 进程收尾。
+- 权威源码清单与阶段无关的验证入口。
+- 结构化失败签名、候选审核和稳定规则提升机制。
+- 面向公开发布的当前文件、Git 历史、依赖、本机路径和许可证扫描。
+- 强化 Docker 沙箱验证和显式写入授权。
+- `PostToolUse` P50/P95 性能基准与哈希缓存。
+- 独立安装器、中文 README、公开 CI 和开源治理文件。
+
+### 调整
+
+- 从原应用仓库中提取为独立工程控制系统。
+- 用可移植的仓库默认值替换项目专用路径与配置。
+
+### 安全
+
+- 安全报告只保存发现类型和文件位置，不保存检测到的凭据原文。
+- Codex Hook 会拒绝危险命令、过期或不匹配的写入租约，以及未完成收尾前的提交。

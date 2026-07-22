@@ -1,19 +1,19 @@
-# Origin and Scope
+# 项目来源与开源范围
 
-Agent Engineering Harness was created while building Multiple Agent For Stories, a large multi-agent narrative application with backend, frontend, storage, model-runtime, analysis, and continuity subsystems. The repository's size, historical source versions, cross-module contracts, and AI-assisted development exposed recurring engineering failures that simple prompt templates could not control.
+ScopeLatch 最初诞生于 Multiple Agent For Stories 的工程实践。该项目同时包含后端、前端、存储、模型运行时、故事分析和连续性系统，并长期保留多个历史源码版本。复杂依赖、跨模块契约和 AI 辅助开发暴露了简单提示词无法稳定控制的问题：上下文选错、影响范围遗漏、计划过期、越界写入和验证闭环缺失。
 
-The open-source package contains the independently useful control plane:
+独立开源版本只保留可复用的工程控制层：
 
-- repository indexing and context ranking;
-- impact and synchronization analysis;
-- validation planning;
-- task/session/branch/commit/scope-bound leases;
-- Codex Hook policies;
-- Guard, repair, reporting, security, performance, and sandbox modules;
-- Harness tests and public documentation.
+- 仓库索引与上下文排序；
+- 影响分析与同步要求；
+- 风险分级与验证规划；
+- 任务、会话、分支、提交和范围绑定租约；
+- Codex Hook 策略；
+- Guard、修复、报告、安全、性能与沙箱模块；
+- ScopeLatch 自身测试和公开文档。
 
-It intentionally excludes the original application's source code, business data, prompts, runtime reports, failure history, credentials, local paths, and private project documentation.
+开源包不包含原应用源码、业务数据、业务提示词、运行报告、内部失败历史、凭据、本机路径或私有项目文档。
 
-The bilingual parser and synchronization catalogue retain some narrative-domain terminology because that domain supplied real validation pressure. Those terms are logic, not copied project data, and coexist with generic API, frontend, storage, authentication, payments, CI, and model-runtime concepts.
+双语任务解析器和同步目录中保留少量叙事领域术语，是因为原项目为这些逻辑提供了真实验证压力。这些内容属于通用控制逻辑，不是被复制的故事数据，并与 API、前端、存储、鉴权、支付、CI 和模型运行时等通用领域共同存在。
 
-Version 3.3.0 is repository-grade and self-tested, but it should not be described as an infallible or operating-system-level sandbox. Its value is disciplined engineering coordination and evidence, with explicit limits documented in the security model.
+版本 `3.3.0` 已具备仓库级自测和公开发布检查，但不应被描述为绝对可靠或操作系统级沙箱。ScopeLatch 的价值是提供纪律化的工程协调和可核验证据，其限制在[安全模型](security-model.md)中明确说明。

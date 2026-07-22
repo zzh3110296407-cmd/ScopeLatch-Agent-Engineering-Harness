@@ -1,48 +1,48 @@
-# Security Model
+# 安全模型
 
-## Assets
+## 需要保护的资产
 
-- repository source and history;
-- credentials and provider configuration;
-- validation integrity;
-- task scope and user intent;
-- generated reports and failure knowledge;
-- developer workstation and CI runner.
+- 仓库源码与 Git 历史；
+- 凭据和外部服务配置；
+- 验证结果的完整性；
+- 任务范围与用户意图；
+- 运行报告与失败知识；
+- 开发者工作站和 CI Runner。
 
-## Threats Addressed
+## 已覆盖的威胁
 
-- stale or unrelated plans authorizing a new task;
-- writes outside the reported impact scope;
-- branch, commit, or baseline drift;
-- destructive shell and Git operations;
-- test deletion, runtime-data commits, lockfile drift, and public API/client drift;
-- credentials, high-entropy secrets, private keys, machine paths, and missing release licenses;
-- high or critical dependency advisories;
-- unvalidated completion and commits before closeout.
+- 过期或无关计划授权新任务；
+- 写入超出影响报告范围；
+- 分支、提交或基线发生漂移；
+- 危险 shell 与 Git 操作；
+- 删除测试、提交运行数据、锁文件漂移和公共 API/客户端不同步；
+- 凭据、高熵密钥、私钥、本机路径和发布许可证缺失；
+- 高危或严重依赖漏洞；
+- 未完成验证便结束任务或提交。
 
-## Enforcement Layers
+## 强制层
 
-1. **PreToolUse:** validates the active lease and rejects recognized dangerous or unscoped operations.
-2. **PostToolUse:** compares actual Git-visible side effects with the bound impact report.
-3. **Closeout:** runs Guard, planned checks, a second Guard, report generation, and failure handling.
-4. **Security scanner:** checks the current tree, optional Git history, dependencies, local paths, and licensing without recording secret values.
-5. **Docker sandbox:** optionally runs commands with no network, a read-only workspace, dropped capabilities, no privilege escalation, and resource limits.
+1. **PreToolUse：** 验证活动租约，拒绝可识别的危险或越界操作。
+2. **PostToolUse：** 将工具调用后的 Git 可见副作用与绑定影响报告比较。
+3. **Closeout：** 执行 Guard、计划验证、第二次 Guard、报告和失败处理。
+4. **安全扫描器：** 检查当前文件、可选 Git 历史、依赖、本机路径和许可证，不记录密钥原文。
+5. **Docker 沙箱：** 可选禁网、只读挂载、移除 capabilities、禁止提权并限制资源。
 
-## Explicit Non-Guarantees
+## 不提供的保证
 
-- Harness is not a kernel or hypervisor boundary.
-- Hook matching depends on the agent platform emitting supported tool events.
-- Regex and command parsing cannot classify every possible write mechanism.
-- Git-based Guard cannot observe side effects outside the repository or changes hidden from its snapshot model.
-- Dependency scanners depend on available package-manager tooling and advisory services.
-- Context ranking is heuristic and still requires human review for high-risk work.
+- ScopeLatch 不是内核、虚拟机或 Hypervisor 边界。
+- Hook 匹配依赖智能体平台产生受支持的工具事件。
+- 正则表达式和命令解析无法识别所有可能的写入机制。
+- 基于 Git 的 Guard 无法观察仓库外副作用或其快照模型不可见的变化。
+- 依赖扫描依赖本机包管理工具和外部漏洞数据源。
+- 上下文排序仍是启发式过程，高风险任务需要人工复核。
 
-## Safe Deployment
+## 安全部署建议
 
-- Review and trust `.codex/config.toml` before enabling Hooks.
-- Protect configuration and workflow changes with code review.
-- Keep generated Harness state ignored and private.
-- Use least-privilege CI tokens and read-only permissions by default.
-- Use the Docker sandbox or stronger isolation for untrusted code.
-- Run public-release security scanning before tags or distribution.
-- Revoke leaked credentials immediately; do not rely on deleting one file.
+- 启用 Hook 前审查并信任 `.codex/config.toml`。
+- 对配置和工作流变更执行代码审查。
+- 让 ScopeLatch 运行状态保持忽略和私有。
+- CI 使用最小权限令牌，默认只读。
+- 不可信代码使用 Docker 沙箱或更强隔离。
+- 打标签或分发前运行 `public-release` 安全扫描。
+- 凭据一旦泄露应立即撤销，不能只依赖删除最新文件。

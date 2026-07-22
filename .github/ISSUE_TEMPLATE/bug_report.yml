@@ -1,42 +1,42 @@
-name: Bug report
-description: Report reproducible incorrect Harness behavior.
-title: "[Bug]: "
+name: 缺陷报告
+description: 报告可以稳定复现的 ScopeLatch 错误行为。
+title: "[缺陷]: "
 labels: ["bug"]
 body:
   - type: markdown
     attributes:
-      value: Do not include credentials, private repository content, or unredacted security reports.
+      value: 请勿提交凭据、私有仓库内容或未经脱敏的安全报告。
   - type: input
     id: version
     attributes:
-      label: Harness version
+      label: ScopeLatch 版本
       placeholder: 3.3.0
     validations:
       required: true
   - type: dropdown
     id: platform
     attributes:
-      label: Platform
-      options: [Windows, Linux, macOS, Other]
+      label: 操作系统
+      options: [Windows, Linux, macOS, 其它]
     validations:
       required: true
   - type: textarea
     id: behavior
     attributes:
-      label: Actual behavior
-      description: Include the command, redacted output, and exit status.
+      label: 实际行为
+      description: 请提供命令、脱敏输出和退出状态。
     validations:
       required: true
   - type: textarea
     id: expected
     attributes:
-      label: Expected behavior
+      label: 预期行为
     validations:
       required: true
   - type: textarea
     id: reproduction
     attributes:
-      label: Minimal reproduction
-      description: Use a public or synthetic repository when possible.
+      label: 最小复现
+      description: 请尽量使用公开仓库或人工构造的最小仓库。
     validations:
       required: true
