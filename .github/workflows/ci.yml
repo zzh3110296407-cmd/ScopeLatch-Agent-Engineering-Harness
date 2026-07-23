@@ -59,6 +59,8 @@ jobs:
         run: node harness/cli.mjs init
       - name: Run ScopeLatch tests and hook compilation
         run: npm test
+      - name: Verify published evolution evidence
+        run: npm run evidence:verify
       - name: Build repository indexes
         run: node harness/cli.mjs index
       - name: Verify source authority and configuration

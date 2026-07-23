@@ -1,0 +1,232 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-23T09:27:19+08:00",
+  "measurementType": "repository-capability-and-runtime-artifact-inventory",
+  "metricDefinitions": {
+    "engineModules": "Tracked .mjs files directly under harness/lib at the referenced commit.",
+    "testFiles": "Tracked harness/tests/*.test.mjs files at the referenced commit.",
+    "assertionOccurrences": "Static occurrences of supported assert.* calls in tracked Harness test files; this is not a count of independent test cases.",
+    "verifiedControls": "Count of true values in the 17-item capability checklist; controls are not weighted and this is not a quality score."
+  },
+  "capabilityKeys": [
+    "planningAndContext",
+    "validationGraph",
+    "diffGuard",
+    "repairLoop",
+    "reporting",
+    "knowledge",
+    "preToolHook",
+    "postToolHook",
+    "stopHook",
+    "sessionBinding",
+    "sourceAuthority",
+    "closeoutPipeline",
+    "mandatoryCloseout",
+    "securityScanner",
+    "sandbox",
+    "explicitWriteTargets",
+    "automaticStopCloseout"
+  ],
+  "stages": [
+    {
+      "id": "no-harness",
+      "label": "No Harness baseline",
+      "date": "2026-07-06",
+      "sourceVisibility": "private-project-history",
+      "commit": "d5f5b03dba968c6fa1af1245d3a5559f2e27c1ea",
+      "metrics": { "engineModules": 0, "testFiles": 0, "assertionOccurrences": 0, "verifiedControls": 0 },
+      "capabilities": {
+        "planningAndContext": false,
+        "validationGraph": false,
+        "diffGuard": false,
+        "repairLoop": false,
+        "reporting": false,
+        "knowledge": false,
+        "preToolHook": false,
+        "postToolHook": false,
+        "stopHook": false,
+        "sessionBinding": false,
+        "sourceAuthority": false,
+        "closeoutPipeline": false,
+        "mandatoryCloseout": false,
+        "securityScanner": false,
+        "sandbox": false,
+        "explicitWriteTargets": false,
+        "automaticStopCloseout": false
+      }
+    },
+    {
+      "id": "initial-prototype",
+      "label": "Initial project-aware prototype",
+      "date": "2026-07-06",
+      "sourceVisibility": "private-project-history",
+      "commit": "f30c942724bf12c2256cbab0dc18153837562224",
+      "metrics": { "engineModules": 14, "testFiles": 8, "assertionOccurrences": 86, "verifiedControls": 5 },
+      "capabilities": {
+        "planningAndContext": true,
+        "validationGraph": true,
+        "diffGuard": true,
+        "repairLoop": false,
+        "reporting": false,
+        "knowledge": false,
+        "preToolHook": true,
+        "postToolHook": false,
+        "stopHook": true,
+        "sessionBinding": false,
+        "sourceAuthority": false,
+        "closeoutPipeline": false,
+        "mandatoryCloseout": false,
+        "securityScanner": false,
+        "sandbox": false,
+        "explicitWriteTargets": false,
+        "automaticStopCloseout": false
+      }
+    },
+    {
+      "id": "field-refined-prototype",
+      "label": "Project-use refinement",
+      "date": "2026-07-08",
+      "sourceVisibility": "private-project-history",
+      "commit": "0b4a84275ea18b8950748c87a86e942433dad96b",
+      "metrics": { "engineModules": 17, "testFiles": 12, "assertionOccurrences": 179, "verifiedControls": 8 },
+      "capabilities": {
+        "planningAndContext": true,
+        "validationGraph": true,
+        "diffGuard": true,
+        "repairLoop": true,
+        "reporting": true,
+        "knowledge": true,
+        "preToolHook": true,
+        "postToolHook": false,
+        "stopHook": true,
+        "sessionBinding": false,
+        "sourceAuthority": false,
+        "closeoutPipeline": false,
+        "mandatoryCloseout": false,
+        "securityScanner": false,
+        "sandbox": false,
+        "explicitWriteTargets": false,
+        "automaticStopCloseout": false
+      }
+    },
+    {
+      "id": "v3.2",
+      "label": "Harness Engine V3.2",
+      "date": "2026-07-22",
+      "sourceVisibility": "private-project-history",
+      "commit": "68fd818591a9bc12a491406ae9ac23dcde06f5a6",
+      "tag": "harness-v3.2.0",
+      "metrics": { "engineModules": 27, "testFiles": 24, "assertionOccurrences": 332, "verifiedControls": 14 },
+      "capabilities": {
+        "planningAndContext": true,
+        "validationGraph": true,
+        "diffGuard": true,
+        "repairLoop": true,
+        "reporting": true,
+        "knowledge": true,
+        "preToolHook": true,
+        "postToolHook": true,
+        "stopHook": true,
+        "sessionBinding": true,
+        "sourceAuthority": true,
+        "closeoutPipeline": true,
+        "mandatoryCloseout": false,
+        "securityScanner": true,
+        "sandbox": true,
+        "explicitWriteTargets": false,
+        "automaticStopCloseout": false
+      }
+    },
+    {
+      "id": "v3.3",
+      "label": "Harness Engine V3.3",
+      "date": "2026-07-22",
+      "sourceVisibility": "private-project-history",
+      "commit": "9d5842e02cd761fbf696440a09bc4b22255f29ed",
+      "tag": "harness-v3.3.0",
+      "metrics": { "engineModules": 27, "testFiles": 25, "assertionOccurrences": 377, "verifiedControls": 15 },
+      "capabilities": {
+        "planningAndContext": true,
+        "validationGraph": true,
+        "diffGuard": true,
+        "repairLoop": true,
+        "reporting": true,
+        "knowledge": true,
+        "preToolHook": true,
+        "postToolHook": true,
+        "stopHook": true,
+        "sessionBinding": true,
+        "sourceAuthority": true,
+        "closeoutPipeline": true,
+        "mandatoryCloseout": true,
+        "securityScanner": true,
+        "sandbox": true,
+        "explicitWriteTargets": false,
+        "automaticStopCloseout": false
+      }
+    },
+    {
+      "id": "v3.4.0",
+      "label": "ScopeLatch 3.4.0",
+      "date": "2026-07-23",
+      "sourceVisibility": "public-repository",
+      "commit": "bb636e7dcfc6a1ba019747bb201297589b4aeb31",
+      "verificationRef": "HEAD",
+      "metrics": { "engineModules": 27, "testFiles": 26, "assertionOccurrences": 452, "verifiedControls": 17 },
+      "capabilities": {
+        "planningAndContext": true,
+        "validationGraph": true,
+        "diffGuard": true,
+        "repairLoop": true,
+        "reporting": true,
+        "knowledge": true,
+        "preToolHook": true,
+        "postToolHook": true,
+        "stopHook": true,
+        "sessionBinding": true,
+        "sourceAuthority": true,
+        "closeoutPipeline": true,
+        "mandatoryCloseout": true,
+        "securityScanner": true,
+        "sandbox": true,
+        "explicitWriteTargets": true,
+        "automaticStopCloseout": true
+      }
+    }
+  ],
+  "v31Boundary": {
+    "status": "not-a-separate-quantitative-stage",
+    "reason": "V3.1 was documented as a hardening specification and its accepted controls were delivered in the V3.2 release commit; no independent V3.1 release tag exists in the evidence repository."
+  },
+  "usageEvidence": {
+    "sourceVisibility": "private-project-runtime-artifacts",
+    "observedFrom": "2026-07-06T22:01:32.144+08:00",
+    "observedTo": "2026-07-23T09:27:19.642+08:00",
+    "runDirectories": 125,
+    "runManifests": 111,
+    "validationResults": {
+      "files": 56,
+      "parseErrors": 0,
+      "distribution": { "failed": 6, "passed": 37, "passed-or-skipped": 13 }
+    },
+    "initialGuardResults": {
+      "files": 53,
+      "parseErrors": 0,
+      "distribution": { "failed": 31, "passed": 15, "passed-with-warnings": 7 }
+    },
+    "postValidationGuardResults": {
+      "files": 14,
+      "parseErrors": 0,
+      "distribution": { "failed": 2, "passed": 9, "passed-with-warnings": 3 }
+    },
+    "prReports": 21,
+    "caveat": "The archive mixes development tasks, controlled negative-path tests, benchmarks, interrupted runs, and completed work. Status counts are evidence that the control paths executed, not production incident counts or productivity measurements."
+  },
+  "currentReleaseVerification": {
+    "commit": "bb636e7dcfc6a1ba019747bb201297589b4aeb31",
+    "githubActionsRun": "https://github.com/zzh3110296407-cmd/ScopeLatch-Agent-Engineering-Harness/actions/runs/29971645147",
+    "harnessSuite": { "status": "passed", "testFilesExecuted": 26 },
+    "publicReleaseSecurity": { "status": "passed", "blockers": 0, "warnings": 0 },
+    "dockerSandboxJob": { "status": "passed" }
+  }
+}

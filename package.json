@@ -23,6 +23,7 @@
     "harness": "node harness/cli.mjs",
     "status": "node harness/cli.mjs status",
     "index": "node harness/cli.mjs index",
+    "evidence:verify": "node scripts/verify-effect-comparison.mjs",
     "security": "node harness/cli.mjs security --profile public-release",
     "sandbox:verify": "node harness/cli.mjs sandbox --verify --build",
     "install:target": "node scripts/install.mjs"
