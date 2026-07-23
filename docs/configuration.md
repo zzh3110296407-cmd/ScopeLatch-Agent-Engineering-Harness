@@ -17,6 +17,19 @@ ScopeLatch 按以下顺序读取配置，找到第一份可用文件后停止：
 - `outputDir`：运行档案目录，通常为 `.harness/runs`。
 - `stateDir`：本机租约与会话状态目录，通常为 `.harness/state`。
 
+## 执行策略
+
+`policy` 控制写入授权和停止收尾：
+
+- `planMaxAgeMinutes`：计划租约的最长有效时间。
+- `requireSessionBinding`：是否要求计划与当前 Codex 会话绑定。
+- `requireExplicitWriteTargets`：为 `true` 时，只有任务文本中明确出现的仓库相对文件路径可写。
+- `allowOutOfScopeOverride`：是否允许使用 `--allow-out-of-scope`；公开模板默认关闭。
+- `autoCloseoutOnStop`：停止 Hook 是否自动执行完整收尾。
+- `autoCloseoutTimeoutSeconds`：自动收尾超时，默认 900 秒；Hook 自身超时应略高于此值。
+
+推荐保持四项安全默认值不变。需要增加写入文件时，重新创建计划并写出精确路径，而不是放宽现有租约。
+
 ## 源码优先级
 
 `context.sourcePriority` 决定哪些文件应被视为权威来源：

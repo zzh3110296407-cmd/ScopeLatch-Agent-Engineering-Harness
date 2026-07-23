@@ -6,7 +6,7 @@
 
 ScopeLatch Agent Engineering Harness 是面向 AI 编码智能体的项目感知工程控制系统。它把自然语言任务转化为受约束、可验证、可审计的工程闭环，降低智能体在复杂仓库中读错源码、越界修改、漏改下游契约、复用过期计划或未经验证便结束任务的风险。
 
-- 当前版本：`3.3.0`
+- 当前版本：`3.4.0`
 - 许可证：Apache License 2.0
 
 ## 核心流程
@@ -16,21 +16,22 @@ ScopeLatch Agent Engineering Harness 是面向 AI 编码智能体的项目感知
   -> 仓库索引与权威源码识别
   -> 上下文包
   -> 影响报告与 L1-L4 风险分级
-  -> 验证计划与会话绑定写入租约
+  -> 精确写入目标与会话绑定写入租约
   -> 写入前策略检查
   -> 智能体修改
   -> 写入后差异守卫
   -> 分层验证图
   -> 第二次差异守卫
+  -> 停止时自动收尾
   -> PR 报告与失败知识沉淀
 ```
 
 ## 核心能力
 
 - 区分正式源码、参考资料、历史版本和生成文件，优先选择当前权威实现。
-- 分析直接目标、反向依赖、跨模块同步要求和 L1-L4 变更风险。
-- 将写入权限绑定到任务、会话、分支、提交、基线、有效期和允许范围。
-- 通过 Codex `PreToolUse`、`PostToolUse` 和停止前 Hook 约束执行过程。
+- 分析直接目标、反向依赖、跨模块同步要求和 L1-L4 变更风险，同时将这些内容保持为只读上下文。
+- 仅把任务中明确写出的文件路径纳入 `writeTargets`，并将写入权限绑定到任务、会话、分支、提交、基线和有效期。
+- 通过 Codex `PreToolUse`、`PostToolUse` 和停止 Hook 约束执行过程，并在停止时自动完成收尾。
 - 使用 Diff Guard 检测越界修改、测试删除、运行数据、锁文件漂移和公共契约遗漏。
 - 按风险执行静态检查、单元测试、集成测试、契约测试、E2E 与构建验证。
 - 支持最多指定轮数的聚焦修复、机器可读报告和人工审核后的失败规则沉淀。
@@ -60,13 +61,13 @@ node harness/cli.mjs index
 创建第一个受控任务：
 
 ```bash
-node harness/cli.mjs plan "在不修改无关文件的前提下完善 API 验证"
+node harness/cli.mjs plan "修改 src/api/orders.ts 和 tests/orders.test.ts，完善订单 API 验证"
 ```
 
 计划结果保存在 `.harness/runs/<run>/`，其中最重要的文件是：
 
 - `context-pack.md`：本次任务应阅读的上下文。
-- `impact-report.json`：影响范围、风险和同步要求。
+- `impact-report.json`：精确写入目标、只读影响范围、风险和同步要求。
 - `validation-plan.json`：本次任务必须执行的验证图。
 - `codex-prompt.md`：供编码智能体执行的受控提示。
 
@@ -92,6 +93,8 @@ node harness/cli.mjs plan "描述第一个任务"
 
 请检查 `.harness/harness.config.json`，将其中的 `auto` 验证项替换为项目真实命令。配置尚未完成时，`status` 会按设计返回非零状态，而不会把缺失能力伪装成通过。
 
+任务描述必须写出所有预计修改的仓库相对路径。`Must Read`、直接目标、反向依赖和相关测试只授予阅读与验证上下文，不会自动扩大写入权限；发现遗漏路径时，应重新创建计划。
+
 ## 启用 Codex Hook
 
 Hook 默认只复制、不启用。审查配置后选择当前系统对应的命令：
@@ -112,13 +115,13 @@ node scripts/install.mjs --target "../your-project" --enable-hooks
 
 ## 日常使用
 
-修改前创建计划：
+修改前创建计划，并明确列出预计写入的文件：
 
 ```bash
-node harness/cli.mjs plan "新增接口并同步更新客户端"
+node harness/cli.mjs plan "修改 src/api/orders.ts、src/client/orders.ts 和 tests/orders.contract.test.ts，新增订单接口并同步客户端"
 ```
 
-修改完成后执行完整收尾：
+启用 Hook 后，Codex 停止时会自动执行首次 Guard、验证、二次 Guard 和 PR 报告。未启用 Hook、手动工作或 CI 中也可以显式执行完整收尾：
 
 ```bash
 node harness/cli.mjs closeout --run .harness/runs/<run>

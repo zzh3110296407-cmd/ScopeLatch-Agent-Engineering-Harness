@@ -12,8 +12,8 @@ ${task}
 ## Operating Rules
 
 1. Do not edit until you inspect all Must Read files listed in the Context Pack.
-2. Keep changes inside the Impact Report unless you discover a concrete missing dependency.
-3. If you discover broader impact, update your implementation summary and validation assumptions.
+2. Treat Must Read, Direct Targets, Reverse Dependents, and Impacted Tests as read/validation context only.
+3. Write only files listed in Impact Report.writeTargets. If another file is required, create a fresh plan that explicitly lists it before editing.
 4. Do not weaken tests to make failures pass.
 5. If public API/schema changes, synchronize schema, generated clients, server/client usages, and contract tests.
 6. If DB schema changes, update migrations, seed/fixtures, and integration tests.
@@ -54,10 +54,10 @@ ${JSON.stringify(validationPlan, null, 2)}
 ## Implementation Instructions
 
 - Start by reading the Must Read files.
-- Identify exact files to change before editing.
+- Confirm every intended file is listed in Impact Report.writeTargets before editing.
 - Make the smallest coherent change that satisfies the task.
 - Add or update tests when behavior changes.
-- Do not expand beyond the impact report without explaining why.
+- Do not expand write scope inside an active run; re-plan with the additional exact paths.
 - Preserve existing architecture and project conventions.
 
 ## Done When

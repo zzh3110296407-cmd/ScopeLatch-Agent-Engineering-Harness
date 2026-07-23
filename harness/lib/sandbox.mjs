@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { runFile } from './common.mjs';
 
-export const DEFAULT_SANDBOX_IMAGE = 'scopelatch-harness-sandbox:3.3.0';
+export const DEFAULT_SANDBOX_IMAGE = 'scopelatch-harness-sandbox:3.4.0';
 
 export function buildSandboxInvocation({ root, image = DEFAULT_SANDBOX_IMAGE, command, workspaceWritable = false }) {
   if (!Array.isArray(command) || !command.length || command.some((item) => typeof item !== 'string' || !item)) {

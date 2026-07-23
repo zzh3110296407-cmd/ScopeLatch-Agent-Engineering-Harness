@@ -5,7 +5,7 @@ import { readHarnessVersion } from '../lib/version.mjs';
 const root = findGitRoot(process.cwd());
 const version = readHarnessVersion(root);
 assert.match(version.version, /^\d+\.\d+\.\d+$/);
-assert.equal(version.version, '3.3.0');
+assert.equal(version.version, '3.4.0');
 assert.equal(version.runManifestSchemaVersion, 4);
 assert.equal(version.sourceAuthoritySchemaVersion, 2);
 assert.equal(version.ruleReviewSchemaVersion, 1);

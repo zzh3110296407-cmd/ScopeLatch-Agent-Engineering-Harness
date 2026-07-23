@@ -7,12 +7,12 @@ These rules apply to the ScopeLatch Agent Engineering Harness repository.
 Before any file-changing task, create a Harness plan:
 
 ```bash
-node harness/cli.mjs plan "<task description>"
+node harness/cli.mjs plan "<task description with every intended repository-relative write path>"
 ```
 
-Read the generated context pack, impact report, and validation plan. Keep edits inside the reported scope. If the real impact changes, create a fresh plan or explicitly expand the scope.
+Read the generated context pack, impact report, and validation plan. Must Read files, direct targets, reverse dependents, and impacted tests are read/validation context only. Edit only `impact-report.json.writeTargets`. If another file is required, create a fresh plan that names its exact path; do not expand an active run.
 
-Before committing, close the active run:
+The Stop Hook automatically runs Guard, validation, a second Guard, and the PR report. Before committing, confirm the active run is closed; without hooks, close it manually:
 
 ```bash
 node harness/cli.mjs closeout --run .harness/runs/<run>

@@ -129,7 +129,7 @@ function cmdRun({ root, config, argv }) {
   const runData = createRun({ root, config, task, includeWorkingTreeChanges: true, captureBaseline: false });
   printRunSummary(runData);
 
-  const closeout = closeRun({ root, runDir: runData.runDir, config, guardOptions: guardOptions(argv) });
+  const closeout = closeRun({ root, runDir: runData.runDir, config, guardOptions: guardOptions(argv, config) });
   printGuardResult({ root, ...closeout.guard });
   if (closeout.validation) printValidationResult({ root, ...closeout.validation });
   if (closeout.postValidationGuard) {
@@ -145,7 +145,7 @@ function cmdValidate({ root, config, argv }) {
   const planPath = getArg(argv, '--plan') || argv[0];
   if (!planPath) throw new Error('Missing --plan path.');
   const absolute = path.isAbsolute(planPath) ? planPath : path.join(root, planPath);
-  const closeout = closeRun({ root, runDir: path.dirname(absolute), config, guardOptions: guardOptions(argv) });
+  const closeout = closeRun({ root, runDir: path.dirname(absolute), config, guardOptions: guardOptions(argv, config) });
   printGuardResult({ root, ...closeout.guard });
   if (closeout.validation) printValidationResult({ root, ...closeout.validation });
   if (closeout.postValidationGuard) printGuardResult({ root, ...closeout.postValidationGuard });
@@ -180,7 +180,7 @@ function cmdRepair({ root, config, argv }) {
     options: {
       promptOnly: argv.includes('--prompt-only') || argv.includes('--dry-run'),
       maxRounds: numericArg(argv, '--max-rounds'),
-      guardOptions: guardOptions(argv)
+      guardOptions: guardOptions(argv, config)
     }
   });
   printRepairResult({ root, ...repair });
@@ -193,7 +193,7 @@ function cmdCi({ root, config, argv }) {
   const task = `Local CI validation against ${baseRef}`;
   const runData = createRun({ root, config, task, baseRef, includeWorkingTreeChanges: true, captureBaseline: false });
   printRunSummary(runData);
-  const closeout = closeRun({ root, runDir: runData.runDir, config, guardOptions: guardOptions(argv) });
+  const closeout = closeRun({ root, runDir: runData.runDir, config, guardOptions: guardOptions(argv, config) });
   printGuardResult({ root, ...closeout.guard });
   if (closeout.validation) printValidationResult({ root, ...closeout.validation });
   if (closeout.postValidationGuard) {
@@ -336,7 +336,7 @@ function cmdPostCheck({ root, config, argv }) {
   const runArg = getArg(argv, '--run') || argv[0];
   if (!runArg) throw new Error('Missing --run path.');
   const runDir = path.isAbsolute(runArg) ? runArg : path.join(root, runArg);
-  const result = checkRunDiff({ root, runDir, config, options: guardOptions(argv) });
+  const result = checkRunDiff({ root, runDir, config, options: guardOptions(argv, config) });
   console.log(JSON.stringify(result));
   if (result.status === 'failed') process.exitCode = 1;
   return result;
@@ -442,7 +442,7 @@ function cmdGuard({ root, config, argv }) {
     root,
     runDir,
     config,
-    options: guardOptions(argv)
+    options: guardOptions(argv, config)
   });
 
   printGuardResult({ root, result, resultPath, manifestPath });
@@ -469,11 +469,15 @@ function taskFromArgs(argv, flags) {
   return argv.filter((arg) => !flagSet.has(arg)).join(' ');
 }
 
-function guardOptions(argv) {
+function guardOptions(argv, config) {
+  const allowOutOfScope = argv.includes('--allow-out-of-scope');
+  if (allowOutOfScope && config?.policy?.allowOutOfScopeOverride !== true) {
+    throw new Error('--allow-out-of-scope is disabled by policy. Create a fresh plan that explicitly lists every intended write target.');
+  }
   return {
     allowLockfile: argv.includes('--allow-lockfile'),
     allowTestDeletion: argv.includes('--allow-test-deletion'),
-    allowOutOfScope: argv.includes('--allow-out-of-scope'),
+    allowOutOfScope,
     allowCiWorkflow: argv.includes('--allow-ci-workflow'),
     allowApiFrontendDrift: argv.includes('--allow-api-frontend-drift'),
     allowForbiddenDirs: argv.includes('--allow-forbidden-dirs'),
@@ -684,6 +688,7 @@ function printRunSummary(runData) {
   console.log(`\nHarness run: ${rel(runData.runDir)}`);
   console.log(`Risk: ${runData.impactReport.risk.level} (score ${runData.impactReport.risk.score})`);
   console.log(`Must-read files: ${runData.contextPack.mustRead.length}`);
+  console.log(`Explicit write targets: ${runData.impactReport.writeTargets.length}`);
   console.log(`Direct targets: ${runData.impactReport.directTargets.length}`);
   console.log(`Reverse dependents: ${runData.impactReport.reverseDependents.length}`);
   console.log(`Validation commands: ${runData.validationPlan.commands.length}`);

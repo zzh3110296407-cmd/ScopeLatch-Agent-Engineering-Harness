@@ -5,12 +5,12 @@
 Use Harness before any task that creates, edits, deletes, moves, or regenerates repository files. Read-only inspection and explanation do not require a plan.
 
 ```bash
-node harness/cli.mjs plan "<task description>"
+node harness/cli.mjs plan "<task description with every intended repository-relative write path>"
 ```
 
-Read the generated context pack, impact report, and validation plan before editing. Keep changes inside the reported scope. If the real impact is broader, create a fresh plan or explicitly expand the scope.
+Read the generated context pack, impact report, and validation plan before editing. Must Read files, direct targets, reverse dependents, and impacted tests are read/validation context only. Edit only `impact-report.json.writeTargets`. If another file is required, create a fresh plan that names its exact path; do not expand an active run.
 
-Before committing, close the active run:
+The Stop Hook automatically performs Guard, validation, a second Guard, and the PR report. Before committing, confirm the run is closed; without hooks, close it manually:
 
 ```bash
 node harness/cli.mjs closeout --run .harness/runs/<run>

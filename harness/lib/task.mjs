@@ -9,7 +9,7 @@ const stopWords = new Set([
   '一个','这个','那个','需要','实现','修改','修复','新增','删除','更新','功能','问题','代码','项目','里面','可以','帮我','我们'
 ]);
 
-const fileMentionPattern = /[\w@./\\-]+\.(?:mjs|cjs|js|jsx|ts|tsx|json|md|mdx|yml|yaml|toml|css|scss|html|py|go|rs|java|kt|swift|sql|graphql|gql|proto|rb|php|sh|bash)/gi;
+const fileMentionPattern = /[\w@./\\-]+\.(?:mjs|cjs|js|jsx|ts|tsx|json|md|mdx|yml|yaml|toml|css|scss|html|py|go|rs|java|kt|swift|sql|graphql|gql|proto|rb|php|sh|bash)(?![a-z0-9_])/gi;
 
 const zhTermMap = [
   ['多智能体故事生成系统', ['multiple_agent_for_stories', 'multi_agent', 'story_generator', 'story_workbench']],

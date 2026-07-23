@@ -16,6 +16,8 @@
 - [ ] `node harness/cli.mjs index`
 - [ ] `node harness/cli.mjs security --profile public-release`
 - [ ] 安装器已在临时仓库中验证。
+- [ ] 计划只把任务中明确列出的文件写入 `writeTargets`，阅读上下文不会扩大写权限。
+- [ ] Stop Hook 能自动生成验证结果、二次 Guard 和 `pr-report.md`。
 - [ ] Docker 可用时执行 `node harness/cli.mjs sandbox --verify --build`。
 - [ ] GitHub Actions 在 Windows 和 Linux 上通过。
 

@@ -5,7 +5,11 @@
   "stateDir": ".harness/state",
   "policy": {
     "planMaxAgeMinutes": 240,
-    "requireSessionBinding": true
+    "requireSessionBinding": true,
+    "requireExplicitWriteTargets": true,
+    "allowOutOfScopeOverride": false,
+    "autoCloseoutOnStop": true,
+    "autoCloseoutTimeoutSeconds": 900
   },
   "performance": {
     "guardHashCache": true,

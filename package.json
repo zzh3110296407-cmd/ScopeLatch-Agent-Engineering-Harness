@@ -1,6 +1,6 @@
 {
   "name": "scopelatch-agent-engineering-harness",
-  "version": "3.3.0",
+  "version": "3.4.0",
   "description": "ScopeLatch is a repository-aware engineering control plane for AI coding agents.",
   "type": "module",
   "private": true,

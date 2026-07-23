@@ -22,7 +22,7 @@ assert.equal(invocation.shell, false);
 
 const writableInvocation = buildSandboxInvocation({
   root,
-  image: 'scopelatch-harness-sandbox:3.3.0',
+  image: 'scopelatch-harness-sandbox:3.4.0',
   workspaceWritable: true,
   command: ['node', 'harness/cli.mjs', 'status']
 });

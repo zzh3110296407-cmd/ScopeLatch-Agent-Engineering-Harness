@@ -32,6 +32,12 @@ assert.equal(fs.existsSync(path.join(root, '.codex', 'config.toml')), true);
 assert.equal(fs.existsSync(path.join(root, '.harness', 'harness.config.json')), true);
 assert.equal(fs.existsSync(path.join(root, 'AGENTS.harness.md')), true);
 assert.equal(fs.readFileSync(path.join(root, 'AGENTS.md'), 'utf8'), '# Existing rules\n');
+const installedPolicy = JSON.parse(fs.readFileSync(path.join(root, '.harness', 'harness.config.json'), 'utf8')).policy;
+assert.equal(installedPolicy.requireExplicitWriteTargets, true);
+assert.equal(installedPolicy.allowOutOfScopeOverride, false);
+assert.equal(installedPolicy.autoCloseoutOnStop, true);
+assert.equal(installedPolicy.autoCloseoutTimeoutSeconds, 900);
+assert.match(fs.readFileSync(path.join(root, '.codex', 'config.toml'), 'utf8'), /timeout = 960/);
 
 const compileHooks = spawnSync('python', [
   '-m', 'py_compile',
@@ -56,7 +62,7 @@ const installedVersion = spawnSync(process.execPath, ['harness/cli.mjs', 'versio
   encoding: 'utf8'
 });
 assert.equal(installedVersion.status, 0, installedVersion.stderr);
-assert.match(installedVersion.stdout, /3\.3\.0/);
+assert.match(installedVersion.stdout, /3\.4\.0/);
 
 const installedStatus = spawnSync(process.execPath, ['harness/cli.mjs', 'status'], {
   cwd: root,

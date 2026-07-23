@@ -9,6 +9,15 @@ import {
   updateRunManifest,
   writeRunManifest
 } from '../lib/manifest.mjs';
+import { parseTask } from '../lib/task.mjs';
+
+const parsedTargetPaths = parseTask(
+  'Modify .harness/harness.config.json and .harness/harness.config.example.json only.'
+).fileMentions;
+assert.deepEqual(parsedTargetPaths, [
+  '.harness/harness.config.json',
+  '.harness/harness.config.example.json'
+]);
 
 const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'harness-manifest-'));
 const runDir = path.join(tempRoot, '.harness', 'runs', 'run-001');
@@ -33,6 +42,17 @@ const manifest = buildRunManifest({
     baseRef: 'origin/main',
     risk: { level: 'L4', score: 10 },
     riskSignals: [{ signal: 'build-system-change' }],
+    writeTargets: [
+      'harness/lib/manifest.mjs',
+      'harness/tests/manifest.test.mjs'
+    ],
+    directTargets: [
+      'harness/lib/manifest.mjs',
+      'harness/lib/scope.mjs',
+      'AGENTS.md'
+    ],
+    reverseDependents: ['harness/cli.mjs'],
+    impactedTests: ['harness/tests/manifest.test.mjs'],
     requiredSynchronizations: [
       { domain: 'harness-control' },
       { domain: 'public-api' }
@@ -76,7 +96,11 @@ assert.equal(manifest.binding.taskFingerprint, manifest.task.fingerprint);
 assert.equal(manifest.binding.sessionFingerprint, `sha256:${'a'.repeat(64)}`);
 assert.equal(manifest.binding.sessionSource, 'CODEX_THREAD_ID');
 assert.equal(manifest.binding.sessionBindingRequired, true);
-assert.equal(manifest.binding.allowedPathPatterns.includes('harness/**'), true);
+assert.deepEqual(manifest.binding.allowedFiles, [
+  'harness/lib/manifest.mjs',
+  'harness/tests/manifest.test.mjs'
+]);
+assert.deepEqual(manifest.binding.allowedPathPatterns, []);
 assert.equal(manifest.binding.expiresAt, '2026-07-06T04:00:00.000Z');
 
 const manifestPath = writeRunManifest({ runDir, manifest });

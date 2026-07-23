@@ -11,6 +11,10 @@ const config = loadConfig(root);
 const health = buildConfigHealth({ root, config });
 assert.equal(health.status, 'healthy');
 assert.equal(health.checks.every((check) => check.status === 'passed'), true);
+assert.equal(config.policy.requireExplicitWriteTargets, true);
+assert.equal(config.policy.allowOutOfScopeOverride, false);
+assert.equal(config.policy.autoCloseoutOnStop, true);
+assert.equal(config.policy.autoCloseoutTimeoutSeconds, 900);
 
 const disabledCapabilityHealth = buildConfigHealth({
   root,
@@ -66,6 +70,14 @@ assert.throws(
 assert.throws(
   () => validateConfigSchema({ ...config, security: { ...config.security, profile: 'public-ish' } }, 'test config'),
   /security\.profile must be one of private-development, public-release/
+);
+
+assert.throws(
+  () => validateConfigSchema({
+    ...config,
+    policy: { ...config.policy, allowOutOfScopeOverride: 'yes' }
+  }, 'test config'),
+  /policy\.allowOutOfScopeOverride must be a boolean/
 );
 
 assert.throws(

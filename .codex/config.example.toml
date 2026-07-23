@@ -28,5 +28,5 @@ statusMessage = "Harness: verifying repository side effects"
 [[hooks.Stop.hooks]]
 type = "command"
 command = 'python .codex/hooks/stop_guard.py'
-timeout = 30
+timeout = 960
 statusMessage = "Harness: checking validation state"

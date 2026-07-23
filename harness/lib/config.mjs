@@ -51,7 +51,11 @@ const defaultConfig = {
   stateDir: '.harness/state',
   policy: {
     planMaxAgeMinutes: 240,
-    requireSessionBinding: true
+    requireSessionBinding: true,
+    requireExplicitWriteTargets: true,
+    allowOutOfScopeOverride: false,
+    autoCloseoutOnStop: true,
+    autoCloseoutTimeoutSeconds: 900
   },
   performance: {
     guardHashCache: true,
@@ -197,6 +201,10 @@ export function validateConfigSchema(config, source = 'config') {
   requireObject(config?.policy, 'policy', errors);
   requirePositiveInteger(config?.policy?.planMaxAgeMinutes, 'policy.planMaxAgeMinutes', errors);
   requireBoolean(config?.policy?.requireSessionBinding, 'policy.requireSessionBinding', errors);
+  requireBoolean(config?.policy?.requireExplicitWriteTargets, 'policy.requireExplicitWriteTargets', errors);
+  requireBoolean(config?.policy?.allowOutOfScopeOverride, 'policy.allowOutOfScopeOverride', errors);
+  requireBoolean(config?.policy?.autoCloseoutOnStop, 'policy.autoCloseoutOnStop', errors);
+  requirePositiveInteger(config?.policy?.autoCloseoutTimeoutSeconds, 'policy.autoCloseoutTimeoutSeconds', errors);
   requireObject(config?.performance, 'performance', errors);
   requireBoolean(config?.performance?.guardHashCache, 'performance.guardHashCache', errors);
   requirePositiveInteger(config?.performance?.guardHashCacheMaxEntries, 'performance.guardHashCacheMaxEntries', errors);

@@ -16,6 +16,11 @@ const config = {
 const baseImpactReport = {
   risk: { level: 'L3', score: 5 },
   riskSignals: [{ signal: 'public-api-change', source: 'path' }],
+  writeTargets: [
+    'src/api/story.js',
+    'src/api/story-consumer.js',
+    'tests/story.test.js'
+  ],
   categories: {
     publicApi: ['src/api/story.js'],
     database: [],
@@ -85,6 +90,14 @@ const approved = evaluateDiffGuard({
   config,
   impactReport: {
     ...baseImpactReport,
+    writeTargets: [
+      'src/api/story.js',
+      'src/api/story-consumer.js',
+      'tests/story.test.js',
+      'versions/Phase 8.5/Codes/app/frontend/src/api/ordersApi.js',
+      'package-lock.json',
+      'harness/lib/guard.mjs'
+    ],
     riskSignals: [
       { signal: 'public-api-change', source: 'path' },
       { signal: 'build-system-change', source: 'task' }
@@ -116,6 +129,7 @@ const quotedHarnessPath = evaluateDiffGuard({
   config,
   impactReport: {
     ...baseImpactReport,
+    writeTargets: ['harness/lib/guard.mjs'],
     requiredSynchronizations: [
       { domain: 'harness-control', trigger: { files: [] }, validationChecks: ['lint'] }
     ]
@@ -127,6 +141,51 @@ const quotedHarnessPath = evaluateDiffGuard({
 
 assert.equal(quotedHarnessPath.status, 'passed');
 assert.equal(quotedHarnessPath.changes[0].path, 'harness/lib/guard.mjs');
+
+const readContextIsNotWriteAuthority = evaluateDiffGuard({
+  config,
+  impactReport: {
+    ...baseImpactReport,
+    writeTargets: ['src/api/story.js'],
+    directTargets: ['src/api/story.js', 'src/read-only-context.js'],
+    reverseDependents: ['src/read-only-dependent.js'],
+    impactedTests: ['tests/read-only-related.test.js'],
+    requiredSynchronizations: [
+      { domain: 'frontend', trigger: { files: [] }, validationChecks: ['build'] },
+      { domain: 'harness-control', trigger: { files: [] }, validationChecks: ['lint'] }
+    ]
+  },
+  changes: [
+    { path: 'src/read-only-context.js', kind: 'modified' },
+    { path: 'src/read-only-dependent.js', kind: 'modified' },
+    { path: 'tests/read-only-related.test.js', kind: 'modified' },
+    { path: 'versions/Phase 8.5/Codes/app/frontend/src/App.jsx', kind: 'modified' },
+    { path: 'harness/lib/guard.mjs', kind: 'modified' }
+  ]
+});
+assert.equal(readContextIsNotWriteAuthority.status, 'failed');
+assert.deepEqual(
+  readContextIsNotWriteAuthority.findings.find((finding) => finding.id === 'out-of-scope-change')?.files,
+  [
+    'src/read-only-context.js',
+    'src/read-only-dependent.js',
+    'tests/read-only-related.test.js',
+    'versions/Phase 8.5/Codes/app/frontend/src/App.jsx',
+    'harness/lib/guard.mjs'
+  ]
+);
+
+const legacyRunCompatibility = evaluateDiffGuard({
+  config,
+  impactReport: {
+    ...baseImpactReport,
+    writeTargets: undefined,
+    riskSignals: [],
+    requiredSynchronizations: []
+  },
+  changes: [{ path: 'src/api/story.js', kind: 'modified' }]
+});
+assert.equal(legacyRunCompatibility.findings.some((finding) => finding.id === 'out-of-scope-change'), false);
 
 const baselineDelta = changesSinceSnapshot(
   [
@@ -149,6 +208,7 @@ fs.writeFileSync(path.join(securityRoot, 'guide.md'), `Use ${localExamplePath} l
 const securityImpact = {
   risk: { level: 'L1', score: 1 },
   riskSignals: [],
+  writeTargets: ['secret.js', 'guide.md'],
   directTargets: ['secret.js', 'guide.md'],
   reverseDependents: [],
   impactedTests: [],

@@ -147,6 +147,31 @@ const incompleteCloseoutStop = runHook(stopHook, incompleteCloseoutRoot, { stop_
 assert.equal(incompleteCloseoutStop.decision, 'block');
 assert.match(incompleteCloseoutStop.reason || '', /closeout is incomplete/);
 
+const autoCloseoutRoot = makeGitProject('harness-hook-auto-closeout-');
+fs.writeFileSync(path.join(autoCloseoutRoot, 'tracked.txt'), 'dirty but ready for closeout\n', 'utf8');
+writeHarnessRun(autoCloseoutRoot, 'auto-closeout-run', {
+  validation: false,
+  status: 'guarded',
+  phase: 'guard-complete'
+});
+writeAutoCloseoutStub(autoCloseoutRoot);
+const automaticCloseoutStop = runHook(
+  stopHook,
+  autoCloseoutRoot,
+  { stop_hook_active: false },
+  { HARNESS_STOP_AUTOCLOSEOUT: 'on' }
+);
+assert.equal(automaticCloseoutStop.continue, true);
+assert.equal(fs.existsSync(path.join(autoCloseoutRoot, '.harness', 'runs', 'auto-closeout-run', 'validation-result.json')), true);
+assert.equal(fs.existsSync(path.join(autoCloseoutRoot, '.harness', 'runs', 'auto-closeout-run', 'post-validation-guard-result.json')), true);
+assert.equal(fs.existsSync(path.join(autoCloseoutRoot, '.harness', 'runs', 'auto-closeout-run', 'pr-report.md')), true);
+const automaticManifest = JSON.parse(fs.readFileSync(
+  path.join(autoCloseoutRoot, '.harness', 'runs', 'auto-closeout-run', 'run-manifest.json'),
+  'utf8'
+));
+assert.equal(automaticManifest.status, 'passed');
+assert.equal(automaticManifest.phase, 'closeout-complete');
+
 const validRoot = makeGitProject('harness-hook-valid-');
 fs.writeFileSync(path.join(validRoot, 'tracked.txt'), 'changed before validation\n', 'utf8');
 writeHarnessRun(validRoot, 'validated-run', {
@@ -169,6 +194,7 @@ fs.rmSync(changedCommitRoot, { recursive: true, force: true });
 fs.rmSync(unicodeRoot, { recursive: true, force: true });
 fs.rmSync(staleRoot, { recursive: true, force: true });
 fs.rmSync(incompleteCloseoutRoot, { recursive: true, force: true });
+fs.rmSync(autoCloseoutRoot, { recursive: true, force: true });
 fs.rmSync(validRoot, { recursive: true, force: true });
 
 console.log('HOOKS_POLICY_TEST_PASS');
@@ -233,14 +259,39 @@ function writeHarnessRun(root, runName, {
   }, null, 2)}\n`, 'utf8');
 }
 
-function runHook(script, cwd, payload) {
+function writeAutoCloseoutStub(root) {
+  const harnessDir = path.join(root, 'harness');
+  fs.mkdirSync(harnessDir, { recursive: true });
+  fs.writeFileSync(path.join(harnessDir, 'cli.mjs'), `
+import fs from 'node:fs';
+import path from 'node:path';
+const args = process.argv.slice(2);
+if (args[0] !== 'closeout') process.exit(2);
+const runDir = args[args.indexOf('--run') + 1];
+const manifestPath = path.join(runDir, 'run-manifest.json');
+const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+fs.writeFileSync(path.join(runDir, 'validation-result.json'), JSON.stringify({ status: 'passed', results: [] }) + '\\n');
+fs.writeFileSync(path.join(runDir, 'post-validation-guard-result.json'), JSON.stringify({ status: 'passed', findings: [] }) + '\\n');
+fs.writeFileSync(path.join(runDir, 'pr-report.md'), '# Automatic closeout\\n');
+manifest.status = 'passed';
+manifest.phase = 'closeout-complete';
+fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\\n');
+`, 'utf8');
+}
+
+function runHook(script, cwd, payload, envOverrides = {}) {
   const res = spawnSync('python', [script], {
     cwd,
     input: `${JSON.stringify(payload)}\n`,
     encoding: 'utf8',
     timeout: 30_000,
     maxBuffer: 1024 * 1024,
-    env: { ...process.env, CODEX_THREAD_ID: sessionId }
+    env: {
+      ...process.env,
+      CODEX_THREAD_ID: sessionId,
+      HARNESS_STOP_AUTOCLOSEOUT: 'off',
+      ...envOverrides
+    }
   });
   assert.equal(res.status, 0, `${res.stdout}\n${res.stderr}`);
   return res.stdout.trim() ? JSON.parse(res.stdout) : {};

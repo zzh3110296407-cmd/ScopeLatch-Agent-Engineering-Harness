@@ -9,10 +9,10 @@ ScopeLatch 将不受约束的仓库任务转化为有边界、有证据的执行
 1. `task.mjs` 从任务中提取意图、文件指向、业务域和风险信号。
 2. `indexer.mjs` 与 `source-authority.mjs` 识别仓库文件、测试、导入关系和权威源码根。
 3. `context-builder.mjs` 对正式源码、参考资料、历史副本、重复内容和生成文件进行排序。
-4. `impact-analyzer.mjs` 计算直接目标、反向依赖、风险信号和跨模块同步要求。
+4. `impact-analyzer.mjs` 从任务中的精确文件路径构建 `writeTargets`，并另行计算只读的直接目标、反向依赖、风险信号和跨模块同步要求。
 5. `validation-planner.mjs` 根据影响面和 L1-L4 风险生成可执行验证图。
-6. `session-binding.mjs` 将写入租约绑定到任务、会话、分支、提交、有效期、基线和允许范围。
-7. Codex Hook 在工具执行前检查授权，在执行后核对副作用，并在闭环未完成时阻止停止。
+6. `session-binding.mjs` 将写入租约绑定到任务、会话、分支、提交、有效期、基线和精确写入目标。
+7. Codex Hook 在工具执行前检查授权，在执行后核对副作用，并在停止时自动触发完整收尾；失败时继续阻止停止。
 8. `guard.mjs` 将实际工作区变化与计划比较，并检查受保护边界。
 9. `validator.mjs` 通过结构化参数执行验证命令，不进行 shell 字符串插值。
 10. `closeout.mjs` 依次执行 Guard、验证、第二次 Guard、报告、指标和失败知识处理。
@@ -31,7 +31,7 @@ ScopeLatch 将不受约束的仓库任务转化为有边界、有证据的执行
 
 公开且需要版本控制的策略位于 `.harness/*.json`、`.codex/` 和项目规则中。运行生成的 `runs`、`state`、`cache`、`security`、失败日志和候选规则必须保持忽略。
 
-运行清单使用带版本号的数据结构，状态会在 `planned`、`guarded`、`validated`、`reported`、`complete`、`failed` 或 `blocked` 之间推进。活动会话绑定的运行未完成前，Hook 会拒绝提交。
+运行清单使用带版本号的数据结构，状态会在 `planned`、`guarded`、`validated`、`reported`、`complete`、`failed` 或 `blocked` 之间推进。活动会话绑定的运行未完成前，Hook 会拒绝提交。读取上下文不会授权写入；旧版运行仍可读取原有范围字段以完成兼容迁移。
 
 ## 扩展方式
 

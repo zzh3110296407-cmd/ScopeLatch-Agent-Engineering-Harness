@@ -7,6 +7,7 @@ import { buildRequiredSynchronizations } from './synchronizations.mjs';
 export function analyzeImpact({ root, taskInfo, contextPack, files, config, baseRef = null, includeWorkingTreeChanges = false }) {
   const filtered = filterRepoFiles(files, config);
   const changed = includeWorkingTreeChanges ? changedFiles(root, baseRef).filter((f) => filtered.includes(f)) : [];
+  const declaredWriteTargets = resolveDeclaredWriteTargets({ root, mentions: taskInfo.fileMentions, files: filtered });
   const inferredTargets = contextPack.mustRead.filter((f) => !/(^|\/)AGENTS\.md$/i.test(f));
   const scopedTargets = contextPack.mentionedFiles?.length
     ? contextPack.mentionedFiles
@@ -19,6 +20,10 @@ export function analyzeImpact({ root, taskInfo, contextPack, files, config, base
   const { importedBy } = buildImportGraph(root, filtered, config.context.maxFileBytesToScan);
   const dependents = reverseDependents(importedBy, directTargets, 2).slice(0, 80);
   const impactedTests = findImpactedTests(filtered, directTargets, dependents, contextPack.relatedTests);
+  const explicitWriteTargetsRequired = config.policy?.requireExplicitWriteTargets !== false;
+  const writeTargets = explicitWriteTargetsRequired
+    ? unique([...declaredWriteTargets, ...changed])
+    : unique([...declaredWriteTargets, ...directTargets, ...dependents, ...impactedTests, ...changed]);
   const categories = categorizeFiles(unique([...directTargets, ...changed]), config);
   const riskSignals = buildRiskSignals({ taskInfo, categories, directTargets, dependents, changed, config });
   const risk = computeRisk({ riskSignals, categories, dependents, changed });
@@ -35,6 +40,11 @@ export function analyzeImpact({ root, taskInfo, contextPack, files, config, base
     generatedAt: new Date().toISOString(),
     baseRef,
     changedFiles: changed,
+    writeTargets,
+    scopePolicy: {
+      mode: explicitWriteTargetsRequired ? 'explicit-write-targets' : 'context-derived-write-targets',
+      declaredTargetCount: declaredWriteTargets.length
+    },
     directTargets,
     reverseDependents: dependents,
     impactedTests,
@@ -46,6 +56,34 @@ export function analyzeImpact({ root, taskInfo, contextPack, files, config, base
     escalationRequired: risk.level === 'L4' || riskSignals.some((s) => s.severity === 'high'),
     recommendations: recommendations({ categories, risk, impactedTests, requiredSynchronizations })
   };
+}
+
+function resolveDeclaredWriteTargets({ root, mentions = [], files = [] }) {
+  const resolved = [];
+  for (const rawMention of mentions) {
+    const mention = normalizeDeclaredPath(root, rawMention);
+    if (!mention) continue;
+    if (files.includes(mention)) {
+      resolved.push(mention);
+      continue;
+    }
+    const suffixMatches = files.filter((file) => file === mention || file.endsWith(`/${mention}`));
+    if (suffixMatches.length === 1) {
+      resolved.push(suffixMatches[0]);
+      continue;
+    }
+    if (mention.includes('/') && suffixMatches.length === 0) resolved.push(mention);
+  }
+  return unique(resolved);
+}
+
+function normalizeDeclaredPath(root, value) {
+  const normalized = String(value || '').trim().replace(/\\/g, '/').replace(/^\.\//, '');
+  if (!normalized || normalized.includes('\0')) return null;
+  const absolute = path.resolve(root, normalized);
+  const relative = path.relative(root, absolute).replace(/\\/g, '/');
+  if (!relative || relative === '.' || relative === '..' || relative.startsWith('../') || path.isAbsolute(relative)) return null;
+  return relative;
 }
 
 function categorizeFiles(files, config) {

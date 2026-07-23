@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "status": "ready",
   "root": ".",
-  "phase": "3.3",
-  "declaredAt": "2026-07-22",
+  "phase": "3.4",
+  "declaredAt": "2026-07-23",
   "requiredMarkers": ["harness/lib", "harness/tests"],
   "readinessFiles": [
     "harness/cli.mjs",
