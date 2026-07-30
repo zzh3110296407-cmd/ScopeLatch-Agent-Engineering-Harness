@@ -101,7 +101,7 @@
     },
     {
       "path": ".harness/docs/harness-v4-h9-formal-cutover-spec.md",
-      "digest": "sha256:c71b5cd2a7a1347a04c32211f85020bc4a05772569bae4357a20c97c49ed7c88"
+      "digest": "sha256:af3e494969d53c0e436a5482b0ddec869175425c1e4f005133b9156c11124883"
     },
     {
       "path": ".harness/docs/harness-v4-h9-operations-runbook.md",
