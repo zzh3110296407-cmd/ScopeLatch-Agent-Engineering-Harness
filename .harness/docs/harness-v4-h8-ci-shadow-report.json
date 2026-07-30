@@ -99,13 +99,13 @@
   "eligibleForH9": false,
   "sourceHashes": {
     ".gitattributes": "sha256:699088dba2d07ccc4381e1cec9d2ded57fc3ae64e62dc6ed1033f84aa4afb1fb",
-    ".github/workflows/harness-v4-shadow.yml": "sha256:4c60444885c0ec90dfc0336cb4ab31d4114232365da8eaefdf1a9a9d7c981f41",
+    ".github/workflows/harness-v4-shadow.yml": "sha256:ebbb0aeee3f4548cb789814e94cef70f84a33505792a8b939e2233c42125f912",
     ".harness/docs/harness-v4-h8-operations-runbook.md": "sha256:d0c3be4c14a285346c8524d3b6ae32cbbaf3917ca6c56d2cd20274720c12376d",
     "harness/contracts/v4/shadow-qualification-policy.json": "sha256:059da4d85a9ba238724b84e55d3c768f1b991aae9567ba8dd578fe56ed1157bf",
     "harness/lib/v4/shadow-qualification.mjs": "sha256:711e52359425eb4c96cf93397bc07a216c9401c397be9bb22e81551fb59ca621",
     "harness/qualification/qualify-shadow-window.mjs": "sha256:7bed7484a800ea664251b7c0c9d280e6dedb1388dc29ee6822d9937c9f42cc72",
     "harness/qualification/run-shadow-pair.mjs": "sha256:49deb5dc301b592c22fc8493f419b64baccf4a704cf57ad0a5163c5e1e56f755",
-    "harness/tests/v4-h8-ci-shadow-qualification.test.mjs": "sha256:e91e61ae23dfc11065d247b7ff7105da3a6b41b6f53df0763136c5a8a5426599",
+    "harness/tests/v4-h8-ci-shadow-qualification.test.mjs": "sha256:d15b0c61d854082c64923f709616d03210136f47c8c95f5baf8423d70e2c0292",
     "harness/validators/run.mjs": "sha256:bcf2cdec9b6a45e5fa53fef109c58004e29d66a213b544f7e0ca8cd0faf52628"
   },
   "hardFailures": [

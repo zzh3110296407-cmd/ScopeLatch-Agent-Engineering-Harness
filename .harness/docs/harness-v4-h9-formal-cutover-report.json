@@ -6,7 +6,7 @@
   "predecessor": {
     "milestone": "H8",
     "reportPath": ".harness/docs/harness-v4-h8-ci-shadow-report.json",
-    "reportDigest": "sha256:85478c60f40d942b0e56e1956b53efd0e614000bd9caa0c8aed3a35ae1cab928",
+    "reportDigest": "sha256:a062fe7d06f05bd8b99d366344d34280509f145ad92e03fb48ffe94f6de3ce3e",
     "infrastructureStatus": "PASS",
     "shadowWindowStatus": "BLOCKED_PENDING_CI_WINDOW"
   },
@@ -92,7 +92,7 @@
     },
     {
       "path": ".github/workflows/harness-v4-formal.yml",
-      "digest": "sha256:0d49a68c77a1a3b5e39416a220c633995981c7cd04c59b37aa90e6b4aef23cca"
+      "digest": "sha256:6d9b062cb6d7744d0f39c2cc2ddc448468723f138212bfd00771ddde357b9edb"
     },
     {
       "path": ".harness/docs/harness-v4-only-cutover-spec.md",
@@ -112,7 +112,7 @@
     },
     {
       "path": "harness/tests/v4-h9-formal-cutover.test.mjs",
-      "digest": "sha256:fba77599c8e5bea373fb68542df29e29b6192b1df478609f5a075d9a1da58208"
+      "digest": "sha256:1daf5d0c46f597a1a2f774ab7c1b21db7cbf8a0b87ef104e611829e18ba80ecd"
     }
   ],
   "longWindowExclusion": {

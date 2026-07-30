@@ -185,7 +185,7 @@
       "sourceVisibility": "public-repository",
       "commit": null,
       "verificationRef": "WORKTREE",
-      "metrics": { "engineModules": 35, "testFiles": 37, "assertionOccurrences": 1229, "verifiedControls": 17 },
+      "metrics": { "engineModules": 35, "testFiles": 37, "assertionOccurrences": 1232, "verifiedControls": 17 },
       "capabilities": {
         "planningAndContext": true,
         "validationGraph": true,

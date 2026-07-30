@@ -82,6 +82,7 @@ assert.match(formalWorkflowSource, /pull_request:/);
 assert.doesNotMatch(formalWorkflowSource, /continue-on-error/);
 assert.doesNotMatch(formalWorkflowSource, /workflow_dispatch:/);
 assert.doesNotMatch(formalWorkflowSource, /uses:\s*[^@\r\n]+@v\d+/);
+assert.match(formalWorkflowSource, /python-version:\s*"3\.12\.10"/);
 assert.match(formalWorkflowSource, /--base-ref "\$env:HARNESS_FORMAL_BASE_REF"/);
 assert.doesNotMatch(formalWorkflowSource, /--base-ref "\$\{\{/);
 assert.equal(

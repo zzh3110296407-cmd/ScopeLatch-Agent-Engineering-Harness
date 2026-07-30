@@ -14,6 +14,7 @@ assert.match(workflow, /actions\/checkout@[0-9a-f]{40} # v7/);
 assert.match(workflow, /actions\/setup-node@[0-9a-f]{40} # v7/);
 assert.match(workflow, /actions\/setup-python@[0-9a-f]{40} # v7/);
 assert.match(workflow, /actions\/upload-artifact@[0-9a-f]{40} # v7/);
+assert.match(workflow, /python-version:\s*"3\.12\.10"/);
 assert.doesNotMatch(workflow, /uses:\s+actions\/(?:checkout|setup-node|setup-python|upload-artifact)@v\d+\b/);
 assert.equal(
   (workflow.match(/persist-credentials: false/g) || []).length,

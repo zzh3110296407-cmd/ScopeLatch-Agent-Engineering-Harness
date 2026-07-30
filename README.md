@@ -51,7 +51,7 @@ PASS | FAIL | BLOCKED | ERROR | CANCELED | NOT_APPLICABLE
 ## 环境要求
 
 - Node.js `24.11.0` 或兼容的 Node 24
-- Python `3.12.12` 或兼容的 Python 3.12（Codex Hook 和执行器）
+- Python `3.12.10` 或兼容的 Python 3.12（Codex Hook 和执行器）
 - Git
 - Docker（仅沙箱验证需要）
 - Codex CLI（仅 Codex Hook/受控进程流程需要）
