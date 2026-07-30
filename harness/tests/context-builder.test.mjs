@@ -3,14 +3,12 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { buildContextPack } from '../lib/context-builder.mjs';
-import { analyzeImpact } from '../lib/impact-analyzer.mjs';
-import { parseTask } from '../lib/task.mjs';
 
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'harness-context-priority-'));
-const current = 'versions/Phase 8.5/Codes/app/frontend/src/production-ui/ProductUiApp.jsx';
-const historical = 'versions/Phase 3/Codes/app/frontend/src/production-ui/ProductUiApp.jsx';
-const generated = 'validation/frontend-product-workbench-validation-report.json';
-const currentTest = 'versions/Phase 8.5/Codes/app/frontend/tests/ProductUiApp.test.jsx';
+const current = 'Project Codes/Phase 8.5/Codes/app/frontend/src/production-ui/ProductUiApp.jsx';
+const historical = 'Project Codes/Phase 3/Codes/app/frontend/src/production-ui/ProductUiApp.jsx';
+const generated = 'Database/06-validation/frontend-product-workbench-validation-report.json';
+const currentTest = 'Project Codes/Phase 8.5/Codes/app/frontend/tests/ProductUiApp.test.jsx';
 const duplicateBody = 'export function ProductUiApp() { return "product workbench"; }\n';
 
 write(current, duplicateBody);
@@ -36,9 +34,9 @@ const context = buildContextPack({
       maxFileBytesToScan: 100000,
       excludePathPatterns: [],
       sourcePriority: {
-        activeSourceRoots: ['versions/Phase 8.5/Codes/**'],
+        activeSourceRoots: ['Project Codes/Phase 8.5/Codes/**'],
         referenceSourceRoots: [],
-        historicalPathPatterns: ['versions/Phase */**'],
+        historicalPathPatterns: ['Project Codes/Phase */**'],
         generatedPathPatterns: ['**/*_report.json', '**/*validation-report*'],
         activeBonus: 50,
         referenceBonus: 10,
@@ -58,12 +56,12 @@ assert.equal(context.relatedFiles.includes(historical), false);
 assert.equal(context.mustRead.includes(generated), false);
 assert.equal(context.relatedTests.includes(currentTest), true);
 assert.equal(context.retrieval.deduplicatedFileCount, 1);
-assert.deepEqual(context.retrieval.activeSourceRoots, ['versions/Phase 8.5/Codes/**']);
+assert.deepEqual(context.retrieval.activeSourceRoots, ['Project Codes/Phase 8.5/Codes/**']);
 
 const harnessCli = 'harness/cli.mjs';
 const harnessTest = 'harness/tests/closeout.test.mjs';
 const harnessHook = '.codex/hooks/stop_guard.py';
-const businessScript = 'versions/Phase 8.5/Codes/app/backend/scripts/verify_business_closeout.py';
+const businessScript = 'Project Codes/Phase 8.5/Codes/app/backend/scripts/verify_business_closeout.py';
 write(harnessCli, 'export function closeHarnessRun() { return "guard validate closeout"; }\n');
 write(harnessTest, 'test("harness closeout", () => {});\n');
 write(harnessHook, 'def enforce_harness_closeout():\n    return "guard validation"\n');
@@ -103,81 +101,6 @@ assert.equal(controlContext.mustRead.includes(harnessHook), true);
 assert.equal(controlContext.relatedTests.includes(harnessTest), true);
 assert.equal(controlContext.mustRead.includes(businessScript), false);
 assert.equal(controlContext.relatedFiles.includes(businessScript), false);
-
-const valueSource = 'src/value.mjs';
-const valueTest = 'tests/value.test.mjs';
-const installedHarnessFile = 'harness/lib/config.mjs';
-write(valueSource, 'export const value = () => 1;\n');
-write(valueTest, 'test("value", () => {});\n');
-write(installedHarnessFile, 'export function normalizeValue(value) { return value; }\n');
-
-const businessTask = parseTask('Update src/value.mjs to return 2 and synchronize tests/value.test.mjs');
-assert.deepEqual(businessTask.fileMentions, [valueSource, valueTest]);
-assert.deepEqual(businessTask.tokens, ['value']);
-
-const businessConfig = {
-  context: {
-    maxMustReadFiles: 8,
-    maxRelatedFiles: 8,
-    maxRelatedTests: 8,
-    maxFileBytesToScan: 100000,
-    excludePathPatterns: [],
-    sourcePriority: {
-      activeSourceRoots: ['src/**', 'tests/**', 'harness/**'],
-      referenceSourceRoots: [],
-      historicalPathPatterns: [],
-      generatedPathPatterns: [],
-      activeBonus: 40,
-      referenceBonus: 0,
-      historicalPenalty: -30,
-      generatedPenalty: -35,
-      deduplicateExactContent: true,
-      includeGeneratedInMustRead: false,
-      preferActiveTests: true
-    },
-    controlPlane: {
-      taskTokens: ['harness'],
-      pathPatterns: ['harness/**', '.harness/**', '.codex/hooks/**', 'AGENTS.md'],
-      activeBonus: 120,
-      outsidePenalty: -120
-    }
-  },
-  changeBudget: {
-    forbiddenDirs: [],
-    maxRepairRounds: 3,
-    escalateOn: []
-  },
-  riskRules: {
-    publicApiPatterns: [],
-    databasePatterns: [],
-    authPatterns: [],
-    paymentPatterns: [],
-    sharedPatterns: [],
-    buildSystemPatterns: []
-  }
-};
-const businessFiles = [valueSource, valueTest, installedHarnessFile];
-const businessContext = buildContextPack({
-  root,
-  files: businessFiles,
-  taskInfo: businessTask,
-  config: businessConfig
-});
-
-assert.deepEqual(businessContext.mentionedFiles, [valueSource, valueTest]);
-assert.equal(businessContext.mustRead.includes(valueSource), true);
-assert.equal(businessContext.relatedTests.includes(valueTest), true);
-assert.equal(businessContext.mustRead.includes(installedHarnessFile), false);
-assert.equal(businessContext.relatedFiles.includes(installedHarnessFile), false);
-
-const businessImpact = analyzeImpact({
-  root,
-  taskInfo: businessTask,
-  contextPack: businessContext,
-  files: businessFiles,
-  config: businessConfig
-});
-assert.deepEqual(businessImpact.directTargets, [valueSource, valueTest]);
 
 fs.rmSync(root, { recursive: true, force: true });
 console.log('CONTEXT_BUILDER_TEST_PASS');

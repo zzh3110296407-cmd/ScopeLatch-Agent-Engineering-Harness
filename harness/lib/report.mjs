@@ -68,7 +68,7 @@ export function buildRunMetrics({
 }) {
   const requiredCommands = (validationPlan.commands || []).filter((command) => command.required);
   const unavailableCommands = (validationPlan.commands || []).filter((command) => !command.available);
-  const failedSignatures = validationResult?.status === 'failed'
+  const failedSignatures = ['failed', 'blocked', 'error', 'invalidated'].includes(validationResult?.status)
     ? [failureSignature(validationResult)]
     : [];
   const outOfScope = (guardResult?.findings || [])
@@ -187,7 +187,11 @@ function remainingRisks({ validationResult, guardResult, validationPlan }) {
   }
   for (const result of validationResult?.results || []) {
     if (result.status === 'failed') risks.push(`Validation failed: ${result.id}`);
-    if (result.status === 'skipped') risks.push(`Validation skipped: ${result.id}: ${result.reason || 'no reason recorded'}`);
+    if (['blocked', 'skipped'].includes(result.status)) risks.push(`Validation blocked: ${result.id}: ${result.reason || 'no reason recorded'}`);
+    if (result.status === 'error') risks.push(`Validation error: ${result.id}: ${result.reason || result.error || 'no reason recorded'}`);
+  }
+  for (const violation of validationResult?.planViolations || []) {
+    risks.push(`Plan blocked: ${violation.code} at ${violation.safePath}`);
   }
   for (const command of validationPlan.commands || []) {
     if (!command.available) risks.push(`Validation unavailable: ${command.id}`);

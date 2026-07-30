@@ -1,0 +1,200 @@
+{
+  "schemaVersion": 1,
+  "milestone": "H4",
+  "contractVersion": "harness-trust-v4.0.0",
+  "generatedAt": "2026-07-29T14:45:33+08:00",
+  "predecessor": {
+    "milestone": "H3",
+    "reportPath": ".harness/docs/harness-v4-h3-git-candidate-report.json",
+    "reportDigest": "sha256:0001f7670968ba70b5d2b93a99c898a00dd239925232ee15d37d9dc77e5d0b23",
+    "regressionStatus": "PASS"
+  },
+  "scope": {
+    "networkUsed": false,
+    "externalServicesCalled": false,
+    "applicationFilesChanged": false,
+    "phase9FilesChanged": false,
+    "formalAttestationImplemented": false,
+    "formalAttestationReason": "H4 makes applicability and acceptance evidence executable. Independent formal attestation remains an H5 responsibility."
+  },
+  "observations": [
+    {
+      "invariantResultId": "sha256:34e0372679d3a0a5111c61fce674e4a5f11308c92a9b7b32434aea31145f56ba",
+      "scenarioId": "catalog-closed",
+      "boundary": "catalog-loader",
+      "outcome": "PASS",
+      "evidence": "Closed shapes, duplicate identities, unknown references and dependency cycles are rejected."
+    },
+    {
+      "invariantResultId": "sha256:2e0d7cea44fe9cde1a9de8a89491f3f0af8ff602f310e051ecc0cd415fc035c0",
+      "scenarioId": "planner-deterministic",
+      "boundary": "planner",
+      "outcome": "PASS",
+      "evidence": "Identical normalized inputs produce the same planning digest, applicability set, command order and graph."
+    },
+    {
+      "invariantResultId": "sha256:a12d0b78af644973c24403465bbe418404a8152e590f2bed85a9c6a363c720f9",
+      "scenarioId": "acceptance-bound",
+      "boundary": "validator",
+      "outcome": "PASS",
+      "evidence": "Every applicable acceptance resolves to observed command result IDs; fabricated acceptance evidence is rejected."
+    },
+    {
+      "invariantResultId": "sha256:cc9ad15ab6bc969084a691a45def4ed5179e46287a353101cffa8544ca3b4116",
+      "scenarioId": "sync-compiled",
+      "boundary": "planner",
+      "outcome": "PASS",
+      "evidence": "Every required synchronization check becomes a required graph result, including unavailable unregistered checks."
+    },
+    {
+      "invariantResultId": "sha256:4aa3bc85e54a56dddb4fd32afb10ba448383180556bd2586bb49e43c3779e243",
+      "scenarioId": "selectors-bound",
+      "boundary": "planner",
+      "outcome": "PASS",
+      "evidence": "Every impacted test selector is deterministically bound to an executable behavior result."
+    },
+    {
+      "invariantResultId": "sha256:e1617dd35b9b5d828eef8dcfbe6c546b0830f33f85ae1eccf8a82eee5eb89218",
+      "scenarioId": "unknown-conservative",
+      "boundary": "planner",
+      "outcome": "PASS",
+      "evidence": "Unclassified changed files require lint, typecheck, unit, integration and build results."
+    },
+    {
+      "invariantResultId": "sha256:226ba15a526d2bbcb53943170bbd94c61cc83ba7f879e11a7ee31e775e5871cc",
+      "scenarioId": "catalog-drift-blocked",
+      "boundary": "validator-preflight",
+      "outcome": "PASS",
+      "evidence": "Catalog or applicability drift invalidates before any validation command executes."
+    },
+    {
+      "invariantResultId": "sha256:668fc9898c59044aeacafdd41af6407304e8b2dce90622f3e9bfda52b553b863",
+      "scenarioId": "predecessor-regression",
+      "boundary": "milestone-chain",
+      "outcome": "PASS",
+      "evidence": "H0 through H3 markers and predecessor digests remain valid."
+    },
+    {
+      "invariantResultId": "sha256:4a472b9dfcc4789157c7273fa2f0826c7abf3002a0d931482c12a644feca91ef",
+      "scenarioId": "isolated-suite",
+      "boundary": "fresh-local-repository",
+      "outcome": "PASS",
+      "evidence": "The complete 30-test Harness suite passes in a newly initialized local Git repository."
+    }
+  ],
+  "acceptanceEvidence": [
+    {
+      "acceptanceId": "catalog_is_closed_versioned_and_orphan_free",
+      "invariantResultIds": [
+        "sha256:34e0372679d3a0a5111c61fce674e4a5f11308c92a9b7b32434aea31145f56ba"
+      ],
+      "outcome": "PASS"
+    },
+    {
+      "acceptanceId": "planner_output_is_reproducible_for_identical_inputs",
+      "invariantResultIds": [
+        "sha256:2e0d7cea44fe9cde1a9de8a89491f3f0af8ff602f310e051ecc0cd415fc035c0"
+      ],
+      "outcome": "PASS"
+    },
+    {
+      "acceptanceId": "every_acceptance_statement_maps_to_observed_result_ids",
+      "invariantResultIds": [
+        "sha256:a12d0b78af644973c24403465bbe418404a8152e590f2bed85a9c6a363c720f9"
+      ],
+      "outcome": "PASS"
+    },
+    {
+      "acceptanceId": "required_synchronizations_are_catalog_compiled",
+      "invariantResultIds": [
+        "sha256:cc9ad15ab6bc969084a691a45def4ed5179e46287a353101cffa8544ca3b4116"
+      ],
+      "outcome": "PASS"
+    },
+    {
+      "acceptanceId": "impacted_test_selectors_are_executable_or_blocking",
+      "invariantResultIds": [
+        "sha256:4aa3bc85e54a56dddb4fd32afb10ba448383180556bd2586bb49e43c3779e243"
+      ],
+      "outcome": "PASS"
+    },
+    {
+      "acceptanceId": "unknown_changed_files_receive_conservative_validation",
+      "invariantResultIds": [
+        "sha256:e1617dd35b9b5d828eef8dcfbe6c546b0830f33f85ae1eccf8a82eee5eb89218"
+      ],
+      "outcome": "PASS"
+    },
+    {
+      "acceptanceId": "catalog_and_applicability_drift_invalidate_before_execution",
+      "invariantResultIds": [
+        "sha256:226ba15a526d2bbcb53943170bbd94c61cc83ba7f879e11a7ee31e775e5871cc"
+      ],
+      "outcome": "PASS"
+    },
+    {
+      "acceptanceId": "predecessor_milestones_remain_regressed",
+      "invariantResultIds": [
+        "sha256:668fc9898c59044aeacafdd41af6407304e8b2dce90622f3e9bfda52b553b863"
+      ],
+      "outcome": "PASS"
+    },
+    {
+      "acceptanceId": "isolated_full_suite_passes",
+      "invariantResultIds": [
+        "sha256:4a472b9dfcc4789157c7273fa2f0826c7abf3002a0d931482c12a644feca91ef"
+      ],
+      "outcome": "PASS"
+    }
+  ],
+  "isolatedAcceptance": {
+    "status": "PASS",
+    "networkUsed": false,
+    "externalServicesCalled": false,
+    "temporaryRootsUsed": true,
+    "sharedRuntimeDataUsed": false,
+    "repositoryInitializedLocally": true,
+    "testCount": 30,
+    "attempts": [
+      {
+        "attempt": 1,
+        "status": "PASS",
+        "reason": "A fresh temporary repository contains only Harness, hooks, configuration, authority evidence, the versioned invariant catalog and milestone documents."
+      }
+    ],
+    "commands": [
+      {
+        "command": "node harness/tests/v4-h4-invariant-catalog.test.mjs",
+        "expectedMarker": "HARNESS_V4_H4_INVARIANT_CATALOG: PASS",
+        "observed": "PASS"
+      },
+      {
+        "command": "node harness/tests/v4-trust-contract.red.mjs",
+        "expectedMarker": "HARNESS_V4_TARGET_CONTRACT: PASS",
+        "observed": "PASS"
+      },
+      {
+        "command": "node harness/tests/run-all.mjs",
+        "expectedMarker": "HARNESS_TEST_SUITE_PASS (30 tests)",
+        "observed": "PASS"
+      }
+    ]
+  },
+  "sourceHashes": {
+    "harness/contracts/v4/invariant-catalog.json": "sha256:492df80e3a305feb13643e0c4e53702f59840b731be429a08c04a76f3082af5f",
+    "harness/lib/v4/invariant-catalog.mjs": "sha256:af39cfde84d8111aafc6f2548f7a42b71ee86500822f017f299a62452096231a",
+    "harness/lib/validation-planner.mjs": "sha256:61b7cf9b3ec25ef47c9801b8ecd00875e29747d063ea4ef4473fedb8040ef737",
+    "harness/lib/validator.mjs": "sha256:24aac8668a9066b2b4e513754a6a0b8e3c7039d7fb18ca1db1acf2a07bd5d4ab",
+    "harness/tests/codex-process-e2e.test.mjs": "sha256:73b3f570d03d519b4fb4b452c53eb254836e5ef0be6398fd8f1e1f983158b050",
+    "harness/tests/pr10-report-ci.test.mjs": "sha256:5851a78c53a937a2eac430c22ad6864593c4d02b29d76a9148f11e0f95ea7289",
+    "harness/tests/run-command.test.mjs": "sha256:eb978aee0012dce57fec210d7461dcde6af9b25298ea55f45ca00f785cb76fb7",
+    "harness/tests/synchronizations.test.mjs": "sha256:3061af31163979e264e13de733449777c3c6075edc44a3d0f19604bcc3cbb017",
+    "harness/tests/v4-h3-git-candidate.test.mjs": "sha256:d7bc052e43b3423a14fd52dc2db9c1c2ee83c68ee3fa07671870beda08856399",
+    "harness/tests/v4-h4-invariant-catalog.test.mjs": "sha256:dd5cb636ab60cac32dd12124a432176a60512c93364c874fd726da992a4e8e9f",
+    "harness/tests/v4-trust-contract.red.mjs": "sha256:627daf61fc5690cd21be08af783a1cd3e8aaee184ca84ea8288bf3c3fadf8f55",
+    "harness/tests/validation-graph.test.mjs": "sha256:ceed639d259600438bbaee75b2f3d351033d6765506301c03c3ebc6d13fd1b7a"
+  },
+  "hardFailures": [],
+  "nextMilestoneEligible": true,
+  "finalMarker": "HARNESS_V4_H4_INVARIANT_CATALOG: PASS"
+}

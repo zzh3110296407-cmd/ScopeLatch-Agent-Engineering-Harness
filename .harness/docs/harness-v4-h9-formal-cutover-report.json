@@ -1,0 +1,140 @@
+{
+  "schemaVersion": 1,
+  "milestone": "H9",
+  "contractVersion": "harness-formal-cutover-v4.1.0",
+  "generatedAt": "2026-07-30T18:50:00+08:00",
+  "predecessor": {
+    "milestone": "H8",
+    "reportPath": ".harness/docs/harness-v4-h8-ci-shadow-report.json",
+    "reportDigest": "sha256:38f67b855dbf39fbf6a3d4f92e1abfbef2d35ed9ea4ebf0b6d2dbf55b4ffd749",
+    "infrastructureStatus": "PASS",
+    "shadowWindowStatus": "BLOCKED_PENDING_CI_WINDOW"
+  },
+  "implementationAcceptance": {
+    "closed_formal_cutover_policy_validated": true,
+    "auditor_only_formal_issuance_enforced": true,
+    "execution_and_cutover_policy_digests_are_distinct": true,
+    "v4_only_runtime_is_installed": true,
+    "status_only_validation_is_rejected": true,
+    "h8_v4_qualification_remains_active": true,
+    "trusted_runner_recomputes_h8_from_raw_observations": true,
+    "formal_windows_workflow_is_fail_closed": true,
+    "formal_activation_variable_gate_enforced": true,
+    "workflow_toolchain_and_actions_are_pinned": true,
+    "candidate_commit_and_tree_are_exactly_bound": true,
+    "inherited_remote_observations_are_rejected": true
+  },
+  "formalAcceptance": {
+    "absent_stale_invalid_attestation_rejected": true,
+    "delivery_tree_equals_attested_tree": true,
+    "external_enforcement_is_verified": false,
+    "formal_attestation_is_auditor_only": true,
+    "formal_ci_authority_is_closed": true,
+    "formal_workflow_is_fail_closed": true,
+    "h8_qualification_is_required": true,
+    "report_is_observation_derived": true,
+    "rollback_is_v4_fail_closed": true,
+    "v4_only_runtime_is_installed": true
+  },
+  "activationPrerequisites": {
+    "h8WindowSatisfied": false,
+    "externalEnforcementSatisfied": false,
+    "acceptedFormalRunObserved": false
+  },
+  "h8Observation": {
+    "qualifiedRunCount": 0,
+    "requiredRunCount": 20,
+    "observedWindowDays": 0,
+    "requiredWindowDays": 7,
+    "qualifiedTrustRootChangeRunCount": 0,
+    "requiredTrustRootChangeRunCount": 1,
+    "businessProfileCoverage": 0,
+    "reproducibilityRate": 0,
+    "unexplainedDecisionDivergences": 0,
+    "firstQualifiedWindowsRun": null
+  },
+  "externalEnforcementObservation": {
+    "path": ".harness/docs/harness-v4-h9-github-enforcement-observation.json",
+    "digest": "sha256:c3904f393e301b9e912194e5cd3cf143cd49899d9ec4e1a03981e3177b16a91e",
+    "branchProtectionHttpStatus": null,
+    "rulesetsHttpStatus": null,
+    "requiredCheckInstalled": false,
+    "reasonCode": "H9_EXTERNAL_ENFORCEMENT_NOT_OBSERVED"
+  },
+  "isolatedCloseouts": [],
+  "sourceIntegrity": [
+    {
+      "path": "harness/version.json",
+      "digest": "sha256:02f06713e9514988c0d81c043d844563bbfac518e7c46f9dee6ccd0337ede4b5"
+    },
+    {
+      "path": "harness/contracts/v4/formal-cutover-policy.json",
+      "digest": "sha256:45151b8c36a68fdfeeaf19d524b57d6827456b8034222fea2d752df6c6bdefe8"
+    },
+    {
+      "path": "harness/lib/v4/outcome-engine.mjs",
+      "digest": "sha256:1046a0680ca99c776715632887274397525472c80411f162e944a0a192d028cd"
+    },
+    {
+      "path": "harness/lib/validator.mjs",
+      "digest": "sha256:24aac8668a9066b2b4e513754a6a0b8e3c7039d7fb18ca1db1acf2a07bd5d4ab"
+    },
+    {
+      "path": "harness/auditor/lib/formal-cutover.mjs",
+      "digest": "sha256:042ba19297d6b32b915fde704a2fa8ef140c77cb1f7f2be2d739c57f0ba4c256"
+    },
+    {
+      "path": "harness/qualification/run-formal-ci.mjs",
+      "digest": "sha256:b563f3292ed880f272d0f58308d57bed23eabc1b5c2ed1774261f404a9c40a82"
+    },
+    {
+      "path": ".codex/hooks/pre_tool_use_policy.py",
+      "digest": "sha256:196b1e14b93e418853272e0049b509d5fbfb1f294ceecc852a92470c11ccfa11"
+    },
+    {
+      "path": ".github/workflows/harness-v4-formal.yml",
+      "digest": "sha256:622f3bcedf095e76cc092883064ee72b93f6112c05453b7a9ffee3e4c12be6a9"
+    },
+    {
+      "path": ".harness/docs/harness-v4-only-cutover-spec.md",
+      "digest": "sha256:c8a7d6aeb93de6f40c4f2aedcb9948cd51d8fe196f25b850a370cb48f6dfd03d"
+    },
+    {
+      "path": ".harness/docs/harness-v4-h9-formal-cutover-spec.md",
+      "digest": "sha256:c71b5cd2a7a1347a04c32211f85020bc4a05772569bae4357a20c97c49ed7c88"
+    },
+    {
+      "path": ".harness/docs/harness-v4-h9-operations-runbook.md",
+      "digest": "sha256:e2e2d1e7c7099f7fb47422a221349db500e3929aeef94ae3cce4b2db7893f8da"
+    },
+    {
+      "path": ".harness/docs/harness-v4-migration-plan.md",
+      "digest": "sha256:0ccc85c95e3e248c3a11fcd473382544c390eb150ff4eb92819998db0bd9cd56"
+    },
+    {
+      "path": "harness/tests/v4-h9-formal-cutover.test.mjs",
+      "digest": "sha256:440feab6818cd73eef729165528cc2de974023eaf87f0f4525276b8ce2b949e8"
+    }
+  ],
+  "longWindowExclusion": {
+    "excludedFromThisCodeAcceptance": true,
+    "excludedRequirements": [
+      "20 qualified GitHub Actions observations",
+      "at least 7 days of observation"
+    ],
+    "doesNotWaiveFormalActivation": true
+  },
+  "activationBlockers": [
+    "H9_EXTERNAL_ENFORCEMENT_REQUIRED",
+    "H9_FORMAL_CI_RUN_REQUIRED",
+    "H9_H8_QUALIFICATION_REQUIRED"
+  ],
+  "implementationStatus": "PASS",
+  "formalCutoverStatus": "BLOCKED",
+  "finalMarker": "HARNESS_V4_FORMAL_CUTOVER: BLOCKED",
+  "implementationCandidate": {
+    "repository": "zzh3110296407-cmd/ScopeLatch-Agent-Engineering-Harness",
+    "state": "UNCOMMITTED_V4_MIGRATION_WORKTREE",
+    "formalEligible": false
+  }
+}

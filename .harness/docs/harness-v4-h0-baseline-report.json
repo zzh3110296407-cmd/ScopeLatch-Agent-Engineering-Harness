@@ -1,0 +1,111 @@
+{
+  "schemaVersion": 1,
+  "milestone": "H0",
+  "contractVersion": "harness-trust-v4.0.0",
+  "generatedAt": "2026-07-29T00:52:00+08:00",
+  "scope": {
+    "runtimeBehaviorChanged": false,
+    "networkUsed": false,
+    "externalServicesCalled": false,
+    "repositoryWritesOutsideDeclaredH0Targets": false
+  },
+  "approvedDecisions": [
+    "formal_results_bind_to_an_exact_git_tree",
+    "mutable_worktree_success_is_provisional_only",
+    "required_check_exceptions_are_not_formal_pass",
+    "formal_attestation_is_issued_by_an_independent_read_only_auditor"
+  ],
+  "catalogCaseCount": 20,
+  "initialExecutableCaseIds": [
+    "candidate-commit-binding-enforced",
+    "empty-plan-blocked",
+    "git-status-error-blocked",
+    "missing-required-graph-node-blocked",
+    "optional-failure-not-formal-pass",
+    "plan-digest-tamper-detected",
+    "required-sync-checks-compiled",
+    "required-unavailable-blocked",
+    "staged-index-content-bound"
+  ],
+  "initialObservedFailingCaseIds": [
+    "candidate-commit-binding-enforced",
+    "empty-plan-blocked",
+    "git-status-error-blocked",
+    "missing-required-graph-node-blocked",
+    "optional-failure-not-formal-pass",
+    "plan-digest-tamper-detected",
+    "required-sync-checks-compiled",
+    "required-unavailable-blocked",
+    "staged-index-content-bound"
+  ],
+  "initialObservations": [
+    {
+      "caseId": "empty-plan-blocked",
+      "v3Observed": "passed",
+      "v4Required": "BLOCKED"
+    },
+    {
+      "caseId": "required-unavailable-blocked",
+      "v3Observed": "passed-or-skipped",
+      "v4Required": "BLOCKED"
+    },
+    {
+      "caseId": "optional-failure-not-formal-pass",
+      "v3Observed": "passed-or-skipped",
+      "v4Required": "FAIL"
+    },
+    {
+      "caseId": "missing-required-graph-node-blocked",
+      "v3Observed": "passed",
+      "v4Required": "BLOCKED"
+    },
+    {
+      "caseId": "required-sync-checks-compiled",
+      "v3Observed": "five_required_sync_checks_missing",
+      "v4Required": "PASS"
+    },
+    {
+      "caseId": "git-status-error-blocked",
+      "v3Observed": "empty_change_set",
+      "v4Required": "BLOCKED"
+    },
+    {
+      "caseId": "staged-index-content-bound",
+      "v3Observed": "identity_unchanged",
+      "v4Required": "PASS"
+    },
+    {
+      "caseId": "candidate-commit-binding-enforced",
+      "v3Observed": "passed",
+      "v4Required": "INVALIDATED"
+    },
+    {
+      "caseId": "plan-digest-tamper-detected",
+      "v3Observed": "passed",
+      "v4Required": "INVALIDATED"
+    }
+  ],
+  "initialTargetContractStatus": "FAIL",
+  "initialTargetContractMeaning": "The legacy v3 runtime does not yet satisfy the v4 trust contract. This intentional red result is the implementation baseline and is not a Harness v4 success claim.",
+  "h0Acceptance": {
+    "trust_contract_is_versioned_and_tracks_all_four_approved_decisions": true,
+    "migration_is_split_into_h0_through_h9_with_acceptance_and_rollback": true,
+    "adversarial_catalog_has_unique_machine_readable_cases": true,
+    "every_h0_executable_case_was_observed": true,
+    "all_initial_v3_false_passes_are_preserved_as_red_tests": true,
+    "ordinary_test_suite_can_treat_catalogued_red_results_as_expected_baseline": true,
+    "report_claims_are_bound_to_tracked_source_hashes": true
+  },
+  "sourceHashes": {
+    ".gitattributes": "sha256:699088dba2d07ccc4381e1cec9d2ded57fc3ae64e62dc6ed1033f84aa4afb1fb",
+    ".harness/docs/HARNESS_V4_TRUST_CONTRACT.md": "sha256:b382eda7e77a0915478669fbeeccfee9883b68079e460c9208c7984713445079",
+    ".harness/docs/harness-v4-migration-plan.md": "sha256:0ccc85c95e3e248c3a11fcd473382544c390eb150ff4eb92819998db0bd9cd56",
+    "harness/contracts/v4/h0-adversarial-catalog.json": "sha256:963a2e503a585929a0b4639865b22cd708a254b7498459892b5a67c4fd86a9cb",
+    "harness/tests/v4-h0-contract-baseline.test.mjs": "sha256:1f748131e409b9a4f287a620e960ca09bd8a5d37da35f094610ed2a3fdd316ae",
+    "harness/tests/v4-trust-contract.red.mjs": "sha256:627daf61fc5690cd21be08af783a1cd3e8aaee184ca84ea8288bf3c3fadf8f55"
+  },
+  "hardFailures": [],
+  "h0BaselineStatus": "PASS",
+  "nextMilestone": "H1_fail_closed_outcomes",
+  "finalMarker": "HARNESS_V4_H0_TRUST_CONTRACT_BASELINE: PASS"
+}

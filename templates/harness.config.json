@@ -87,15 +87,15 @@
     "buildSystemPatterns": ["package.json", "pnpm-lock.yaml", "yarn.lock", "package-lock.json", "turbo.json", "nx.json", "vite.config.*", "webpack.config.*", "tsconfig*.json", ".github/workflows/**", ".codex/**", "harness/**", ".harness/harness.config.json"]
   },
   "commands": {
-    "lint": "auto",
-    "typecheck": "auto",
-    "test": "auto",
-    "testUnit": "auto",
-    "testIntegration": "auto",
-    "testContract": "auto",
-    "testE2E": "auto",
-    "build": "auto",
-    "generateClient": "auto",
-    "fullCI": "auto"
+    "lint": false,
+    "typecheck": false,
+    "test": false,
+    "testUnit": false,
+    "testIntegration": false,
+    "testContract": false,
+    "testE2E": false,
+    "build": false,
+    "generateClient": false,
+    "fullCI": false
   }
 }

@@ -32,6 +32,18 @@ const changed = readGuardedWorkingTreeSnapshot(root, { metrics: changedMetrics }
 assert.equal(changedMetrics.misses, 1);
 assert.notEqual(changed[0].hash, first[0].hash);
 
+fs.writeFileSync(path.join(root, 'tracked.txt'), 'index-a\n', 'utf8');
+git(['add', 'tracked.txt']);
+fs.writeFileSync(path.join(root, 'tracked.txt'), 'same-worktree\n', 'utf8');
+const stagedA = readGuardedWorkingTreeSnapshot(root, { cacheEnabled: false });
+fs.writeFileSync(path.join(root, 'tracked.txt'), 'index-b\n', 'utf8');
+git(['add', 'tracked.txt']);
+fs.writeFileSync(path.join(root, 'tracked.txt'), 'same-worktree\n', 'utf8');
+const stagedB = readGuardedWorkingTreeSnapshot(root, { cacheEnabled: false });
+assert.equal(stagedA[0].worktreeHash, stagedB[0].worktreeHash);
+assert.notEqual(stagedA[0].indexHash, stagedB[0].indexHash);
+assert.notDeepEqual(stagedA, stagedB);
+
 fs.rmSync(root, { recursive: true, force: true });
 console.log('GUARD_CACHE_TEST_PASS');
 

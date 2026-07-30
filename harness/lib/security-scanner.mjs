@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { filterRepoFiles, gitFiles } from './repo.mjs';
-import { isTextLike, normalizePath, run, runFile, unique } from './common.mjs';
+import { isTextLike, normalizePath, runFile, unique } from './common.mjs';
 
 const placeholderPattern = /^(?:your[-_ ]|replace[-_ ]|placeholder|example|dummy|test|fake|sample|<|\$\{|changeme)/i;
 const directSecretPatterns = [
@@ -208,7 +208,7 @@ function scanDependencies({ root, config, security }) {
   for (const sourceRoot of roots) {
     for (const lock of findNamedFiles(sourceRoot, 'package-lock.json', 8)) {
       const packageDir = path.dirname(lock);
-      const result = run('npm audit --omit=dev --audit-level=high --json', {
+      const result = runFile('npm', ['audit', '--omit=dev', '--audit-level=high', '--json'], {
         cwd: packageDir,
         timeoutMs: security.dependencyAuditTimeoutMs || 120000,
         maxBuffer: 10 * 1024 * 1024
@@ -216,12 +216,15 @@ function scanDependencies({ root, config, security }) {
       audits.push(parseNpmAudit(root, lock, result));
     }
     for (const requirements of findRequirementFiles(sourceRoot, 8)) {
-      const available = run('python -m pip_audit --version', { cwd: path.dirname(requirements), timeoutMs: 10000 });
+      const available = runFile('python', ['-m', 'pip_audit', '--version'], {
+        cwd: path.dirname(requirements),
+        timeoutMs: 10000
+      });
       if (available.exitCode !== 0) {
         audits.push({ ecosystem: 'python', manifest: normalizePath(path.relative(root, requirements)), status: 'unavailable', reason: 'pip-audit-not-installed', highOrCritical: 0 });
         continue;
       }
-      const result = run(`python -m pip_audit -r ${JSON.stringify(requirements)} --format json`, {
+      const result = runFile('python', ['-m', 'pip_audit', '-r', requirements, '--format', 'json'], {
         cwd: path.dirname(requirements),
         timeoutMs: security.dependencyAuditTimeoutMs || 120000,
         maxBuffer: 10 * 1024 * 1024

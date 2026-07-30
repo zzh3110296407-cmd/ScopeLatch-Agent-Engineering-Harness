@@ -10,26 +10,27 @@ const impactReport = {
     { signal: 'build-system-change', source: 'path' }
   ],
   categories: {
-    publicApi: ['src/backend/api/orders.py'],
-    database: ['src/backend/repositories/order_repository.py'],
+    publicApi: ['Project Codes/Phase 8.5/Codes/app/backend/api/chapter_plan.py'],
+    database: ['Project Codes/Phase 8.5/Codes/app/backend/repositories/json_repositories.py'],
     auth: [],
     payment: [],
     shared: [],
     buildSystem: ['harness/lib/impact-analyzer.mjs'],
     tests: [],
-    frontend: ['src/frontend/api/ordersApi.js'],
-    backend: ['src/backend/services/order_service.py'],
+    frontend: ['Project Codes/Phase 8.5/Codes/app/frontend/src/api/projectApi.js'],
+    backend: ['Project Codes/Phase 8.5/Codes/app/backend/services/chapter_plan_service.py'],
     docs: []
   },
   directTargets: [
-    'src/backend/api/orders.py',
-    'src/backend/services/order_service.py',
-    'src/backend/repositories/order_repository.py',
-    'src/frontend/api/ordersApi.js',
+    'Project Codes/Phase 8.5/Codes/app/backend/api/chapter_plan.py',
+    'Project Codes/Phase 8.5/Codes/app/backend/services/chapter_plan_service.py',
+    'Project Codes/Phase 8.5/Codes/app/backend/services/scene_generation_service.py',
+    'Project Codes/Phase 8.5/Codes/app/backend/repositories/json_repositories.py',
+    'Project Codes/Phase 8.5/Codes/app/frontend/src/api/projectApi.js',
     'harness/lib/impact-analyzer.mjs'
   ],
   changedFiles: [
-    'src/backend/api/orders.py'
+    'Project Codes/Phase 8.5/Codes/app/backend/api/chapter_plan.py'
   ],
   impactedTests: [],
   escalationRequired: true
@@ -42,6 +43,8 @@ assert.deepEqual(domains, [
   'public-api',
   'frontend',
   'storage',
+  'chapter-plan',
+  'scene-writing',
   'harness-control'
 ]);
 
@@ -49,7 +52,11 @@ const publicApi = requiredSynchronizations.find((sync) => sync.domain === 'publi
 assert.equal(publicApi.required, true);
 assert.deepEqual(publicApi.validationChecks, ['generate-client', 'test-contract', 'typecheck', 'build']);
 assert.ok(publicApi.review.some((item) => item.includes('OpenAPI')));
-assert.ok(publicApi.trigger.files.includes('src/backend/api/orders.py'));
+assert.ok(publicApi.trigger.files.includes('Project Codes/Phase 8.5/Codes/app/backend/api/chapter_plan.py'));
+
+const chapterPlan = requiredSynchronizations.find((sync) => sync.domain === 'chapter-plan');
+assert.ok(chapterPlan.review.some((item) => item.includes('scene count')));
+assert.ok(chapterPlan.validationChecks.includes('test-contract'));
 
 const validationPlan = planValidation({
   root: process.cwd(),

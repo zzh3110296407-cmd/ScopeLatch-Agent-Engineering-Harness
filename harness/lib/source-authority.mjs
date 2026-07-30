@@ -1,13 +1,14 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { normalizePath } from './common.mjs';
+import { normalizeCommandContract } from './v4/safe-executor.mjs';
 
 const DEFAULT_MANIFEST_PATH = '.harness/source-authority.json';
 
 export function discoverSourceAuthority({
   root,
   configuredRoot = null,
-  searchRoot = 'versions',
+  searchRoot = 'Project Codes',
   requiredMarkers = ['app/backend', 'app/frontend'],
   authorityManifestPath = DEFAULT_MANIFEST_PATH,
   requireAuthorityManifest = false
@@ -78,8 +79,18 @@ export function discoverSourceAuthority({
 }
 
 export function interpolateCanonicalSource(value, authority) {
-  if (typeof value !== 'string' || !value.includes('{canonicalSourceRoot}')) return value;
-  return value.replaceAll('{canonicalSourceRoot}', authority?.root || '.');
+  if (typeof value === 'string') {
+    return value.includes('{canonicalSourceRoot}')
+      ? value.replaceAll('{canonicalSourceRoot}', authority?.root || '.')
+      : value;
+  }
+  if (Array.isArray(value)) return value.map((item) => interpolateCanonicalSource(item, authority));
+  if (isObject(value)) {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, item]) => [key, interpolateCanonicalSource(item, authority)])
+    );
+  }
+  return value;
 }
 
 function readAuthorityManifest(root, manifestPath) {
@@ -124,15 +135,16 @@ function authorityFromManifest({ root, manifest, fallbackMarkers }) {
   }
 
   const validationProfile = data.validationProfile;
-  if (!validationProfile || validationProfile.schemaVersion !== 1 || !isObject(validationProfile.commands)) {
-    errors.push('validationProfile.commands must be present with schemaVersion 1.');
+  if (!validationProfile || validationProfile.schemaVersion !== 2 || !isObject(validationProfile.commands)) {
+    errors.push('validationProfile.commands must be present with schemaVersion 2.');
   } else {
+    validatePolicyDefaults(validationProfile.policyDefaults, errors);
     for (const [capability, steps] of Object.entries(validationProfile.commands)) {
       if (!capability.trim() || !Array.isArray(steps) || !steps.length) {
         errors.push(`Validation capability ${capability || '<empty>'} must contain at least one step.`);
         continue;
       }
-      for (const step of steps) validateValidationStep(capability, step, errors);
+      for (const step of steps) validateValidationStep(capability, step, validationProfile.policyDefaults, errors);
     }
   }
 
@@ -158,7 +170,7 @@ function authorityFromManifest({ root, manifest, fallbackMarkers }) {
   };
 }
 
-function validateValidationStep(capability, step, errors) {
+function validateValidationStep(capability, step, policyDefaults, errors) {
   if (!isObject(step)) {
     errors.push(`Validation capability ${capability} contains a non-object step.`);
     return;
@@ -172,6 +184,50 @@ function validateValidationStep(capability, step, errors) {
   if (step.args !== undefined && (!Array.isArray(step.args) || step.args.some((arg) => typeof arg !== 'string'))) {
     errors.push(`Validation capability ${capability} args must be an array of strings.`);
   }
+  try {
+    normalizeCommandContract({
+      schemaVersion: 1,
+      executable: step.command,
+      args: step.args || [],
+      policy: mergePolicy(policyDefaults, step.policy)
+    });
+  } catch (error) {
+    errors.push(`Validation capability ${capability} has an invalid command policy: ${error.code || error.message}.`);
+  }
+}
+
+function validatePolicyDefaults(value, errors) {
+  if (!isObject(value)) {
+    errors.push('validationProfile.policyDefaults must be present.');
+    return;
+  }
+  try {
+    normalizeCommandContract({
+      schemaVersion: 1,
+      executable: 'node',
+      args: ['--version'],
+      policy: value
+    });
+  } catch (error) {
+    errors.push(`validationProfile.policyDefaults is invalid: ${error.code || error.message}.`);
+  }
+}
+
+function mergePolicy(defaults = {}, override = {}) {
+  return {
+    resources: { ...(defaults.resources || {}), ...(override.resources || {}) },
+    network: { ...(defaults.network || {}), ...(override.network || {}) },
+    environment: {
+      ...(defaults.environment || {}),
+      ...(override.environment || {}),
+      allow: override.environment?.allow || defaults.environment?.allow || [],
+      values: {
+        ...(defaults.environment?.values || {}),
+        ...(override.environment?.values || {})
+      }
+    },
+    writablePaths: override.writablePaths || defaults.writablePaths || []
+  };
 }
 
 function isValidSourceRoot(repoRoot, candidateRoot, requiredMarkers) {

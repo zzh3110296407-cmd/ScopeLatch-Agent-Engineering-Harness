@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "milestone": "H2",
+  "contractVersion": "harness-trust-v4.0.0",
+  "generatedAt": "2026-07-29T01:25:00+08:00",
+  "predecessor": {
+    "milestone": "H1",
+    "reportPath": ".harness/docs/harness-v4-h1-fail-closed-report.json",
+    "reportDigest": "sha256:3fcff39f2fbc063d1846b56daf5177414eddcbbfae7675ce7cfc3294c32e73e0",
+    "regressionStatus": "PASS"
+  },
+  "scope": {
+    "networkUsed": false,
+    "externalServicesCalled": false,
+    "businessCodeChanged": false,
+    "formalAttestationImplemented": false
+  },
+  "acceptance": {
+    "canonical_json_is_key_order_deterministic_and_rejects_unsupported_values": true,
+    "new_run_manifests_require_a_sealed_content_addressed_binding": true,
+    "sealed_binding_records_are_never_overwritten_by_status_updates": true,
+    "validation_plan_and_impact_report_drift_invalidate_before_command_execution": true,
+    "policy_source_authority_and_engine_drift_invalidate_the_run": true,
+    "cross_run_binding_and_evidence_index_mixing_is_rejected": true,
+    "validation_results_bind_to_run_plan_command_and_parent_digests": true,
+    "evidence_objects_are_content_addressed_and_idempotent": true,
+    "legacy_unbound_artifacts_remain_readable_but_not_formal_eligible": true,
+    "h1_regression_suite_remains_passed": true
+  },
+  "isolatedAcceptance": {
+    "status": "PASS",
+    "networkUsed": false,
+    "externalServicesCalled": false,
+    "temporaryRootsUsed": true,
+    "sharedRuntimeDataUsed": false,
+    "commands": [
+      {
+        "command": "node harness/tests/v4-h2-evidence-chain.test.mjs",
+        "expectedMarker": "HARNESS_V4_H2_EVIDENCE_CHAIN: PASS",
+        "observed": "PASS"
+      },
+      {
+        "command": "node harness/tests/manifest.test.mjs",
+        "expectedMarker": "MANIFEST_TEST_PASS",
+        "observed": "PASS"
+      },
+      {
+        "command": "node harness/tests/validation-graph.test.mjs",
+        "expectedMarker": "VALIDATION_GRAPH_TEST_PASS",
+        "observed": "PASS"
+      },
+      {
+        "command": "node harness/tests/closeout.test.mjs",
+        "expectedMarker": "CLOSEOUT_TEST_PASS",
+        "observed": "PASS"
+      },
+      {
+        "command": "node harness/tests/codex-process-e2e.test.mjs",
+        "expectedMarker": "CODEX_PROCESS_E2E_TEST_PASS",
+        "observed": "PASS"
+      },
+      {
+        "command": "node harness/tests/run-command.test.mjs",
+        "expectedMarker": "RUN_COMMAND_TEST_PASS",
+        "observed": "PASS"
+      }
+    ]
+  },
+  "sourceHashes": {
+    "harness/lib/manifest.mjs": "sha256:1b765fb0b58555edd13701123d6d6d586a79813ddb6139293ad37e23982064a1",
+    "harness/lib/v4/canonical-json.mjs": "sha256:881bcd6e7e2d9536cdd8ece3793d4108f31ff2aaf455371ff482f042f88ab8ea",
+    "harness/lib/v4/evidence-store.mjs": "sha256:0ffbed2543605ec6a028539f3fa1c6debf114c8216a768d44c30790c87258deb",
+    "harness/lib/validator.mjs": "sha256:24aac8668a9066b2b4e513754a6a0b8e3c7039d7fb18ca1db1acf2a07bd5d4ab",
+    "harness/tests/manifest.test.mjs": "sha256:7622f0797451657510f64326dfac136eac8e6abc58f3ca74ea06004750832ddf",
+    "harness/tests/v4-h2-evidence-chain.test.mjs": "sha256:612b1d18da5058f455fc49783266d936d5501a27b34b660a32b7ee359e30e6c3"
+  },
+  "hardFailures": [],
+  "nextMilestoneEligible": true,
+  "finalMarker": "HARNESS_V4_H2_EVIDENCE_CHAIN: PASS"
+}

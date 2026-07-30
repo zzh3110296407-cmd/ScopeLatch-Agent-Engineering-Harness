@@ -52,8 +52,7 @@ const fixtureReport = scanRepositorySecurity({
 assert.equal(fixtureReport.status, 'passed-with-warnings');
 assert.equal(fixtureReport.findings.some((item) => item.id === 'test-fixture-credential' && item.severity === 'warning'), true);
 
-const localExamplePath = ['C:', 'Users', 'ExampleUser', 'private-repo', 'notes.md'].join('\\');
-fs.writeFileSync(path.join(root, 'private-notes.md'), `Internal path: ${localExamplePath}\n`, 'utf8');
+fs.writeFileSync(path.join(root, 'private-notes.md'), 'Internal path: C:\\Users\\Developer\\private-repo\\notes.md\n', 'utf8');
 const privateReport = scanRepositorySecurity({
   root,
   config: {
@@ -91,7 +90,7 @@ const historicalSecret = `sk-${'A'.repeat(32)}`;
 fs.writeFileSync(path.join(historyRoot, 'old.env'), `API_KEY=${historicalSecret}\n`, 'utf8');
 git(historyRoot, ['add', '.']);
 git(historyRoot, ['commit', '-m', 'secret fixture']);
-fs.rmSync(path.join(historyRoot, 'old.env'));
+removeTree(path.join(historyRoot, 'old.env'));
 fs.writeFileSync(path.join(historyRoot, 'README.md'), '# Clean tree\n', 'utf8');
 git(historyRoot, ['add', '-A']);
 git(historyRoot, ['commit', '-m', 'remove fixture']);
@@ -109,11 +108,23 @@ assert.equal(historyReport.findings.some((item) => item.id === 'git-history-secr
 assert.equal(historyReport.status, 'failed');
 assert.equal(JSON.stringify(historyReport).includes(historicalSecret), false);
 
-fs.rmSync(root, { recursive: true, force: true });
-fs.rmSync(historyRoot, { recursive: true, force: true });
+removeTree(root);
+removeTree(historyRoot);
 console.log('SECURITY_SCANNER_TEST_PASS');
 
 function git(cwd, args) {
   const result = spawnSync('git', args, { cwd, encoding: 'utf8' });
   assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+}
+
+function removeTree(target) {
+  if (!fs.existsSync(target)) return;
+  const stat = fs.lstatSync(target);
+  if (stat.isDirectory() && !stat.isSymbolicLink()) {
+    for (const entry of fs.readdirSync(target)) removeTree(path.join(target, entry));
+    fs.rmdirSync(target);
+  } else {
+    fs.unlinkSync(target);
+  }
+  assert.equal(fs.existsSync(target), false, `cleanup did not remove ${target}`);
 }

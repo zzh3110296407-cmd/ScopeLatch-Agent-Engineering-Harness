@@ -17,6 +17,10 @@ try {
   for (const step of result.steps) {
     if (step.stdout) process.stdout.write(step.stdout);
     if (step.stderr) process.stderr.write(step.stderr);
+    if (step.outcome !== 'PASS') {
+      const capabilityToken = capability.toUpperCase().replace(/[^A-Z0-9]+/g, '_');
+      console.error(`HARNESS_VALIDATION_STEP_FAILED_${capabilityToken}_${step.index}`);
+    }
   }
   console.log(`HARNESS_VALIDATION_${capability.toUpperCase().replace(/[^A-Z0-9]+/g, '_')}: ${result.status.toUpperCase()}`);
   if (result.status !== 'passed') process.exitCode = result.exitCode || 1;

@@ -1,0 +1,183 @@
+{
+  "schemaVersion": 1,
+  "milestone": "H7",
+  "contractVersion": "harness-trust-v4.0.0",
+  "generatedAt": "2026-07-30T09:00:00+08:00",
+  "predecessor": {
+    "milestone": "H6",
+    "reportPath": ".harness/docs/harness-v4-h6-concurrent-atomic-state-report.json",
+    "reportDigest": "sha256:f0c8c9f22471c074ea79522693c2e480850fabf473a100664b1b475f946082cd",
+    "regressionStatus": "PASS"
+  },
+  "scope": {
+    "networkUsed": false,
+    "externalServicesCalled": false,
+    "applicationFilesChanged": false,
+    "phase9FilesChanged": false,
+    "executorProfile": "host-safe-structured",
+    "formalEligible": false,
+    "formalIneligibilityReason": "Host enforcement cannot prove OS-level network, memory and descendant-process isolation; H8 CI sandbox qualification is required."
+  },
+  "observations": [
+    {
+      "scenarioId": "closed-command-contract",
+      "boundary": "planning-and-audit",
+      "outcome": "PASS",
+      "evidence": "Available commands use schemaVersion 1 executable-plus-argument contracts with closed resource, network, environment and writable-path policy objects. Execution plans use schemaVersion 4."
+    },
+    {
+      "scenarioId": "shell-and-injection-blocked",
+      "boundary": "command-dispatch",
+      "outcome": "PASS",
+      "evidence": "Shell interpreters, batch files and legacy shell control syntax are rejected; spawnSync is always invoked with shell=false."
+    },
+    {
+      "scenarioId": "bounded-host-execution",
+      "boundary": "resource-policy",
+      "outcome": "PASS",
+      "evidence": "Timeout, output, V8 heap and concurrent live-process limits are bounded and observed by runaway, oversized-output and overlapping-process probes. Sequential completed processes release their slots."
+    },
+    {
+      "scenarioId": "secret-redaction",
+      "boundary": "environment-and-output",
+      "outcome": "PASS",
+      "evidence": "Secret-shaped arguments and environment material are rejected; runtime output is redacted before evidence is returned."
+    },
+    {
+      "scenarioId": "network-default-deny",
+      "boundary": "network-policy",
+      "outcome": "PASS",
+      "evidence": "Node and Python runtime guards deny network by default. Allow mode is invalid without a non-empty invariant policy ID and explicit destinations."
+    },
+    {
+      "scenarioId": "candidate-write-prevention",
+      "boundary": "validation-side-effects",
+      "outcome": "PASS",
+      "evidence": "Node and Python write attempts against tracked candidate source are denied before mutation, including descendant Node processes; child shell execution is blocked. Candidate bytes and Git status remain unchanged. A per-execution scratch directory and explicit repository-relative writable paths are the only host write allowances."
+    },
+    {
+      "scenarioId": "git-boundary-defense-in-depth",
+      "boundary": "post-execution-observation",
+      "outcome": "PASS",
+      "evidence": "Git candidate content is observed before and after execution under an atomic resource lock; any non-allowed delta blocks the command."
+    },
+    {
+      "scenarioId": "executor-owned-git-repository-configuration",
+      "boundary": "minimal-environment",
+      "outcome": "PASS",
+      "evidence": "Every bounded command receives an executor-owned Git configuration that disables system/global configuration, binds safe.directory to the exact candidate root, fixes Windows line-ending and path behavior, and forces UTF-8 Git/Python output. Command contracts and runtime overrides cannot supply these reserved keys."
+    },
+    {
+      "scenarioId": "verified-cross-volume-file-operations",
+      "boundary": "windows-filesystem",
+      "outcome": "PASS",
+      "evidence": "The runtime guard, safe-executor scratch cleanup and semantic test-fixture cleanup avoid unreliable native recursive rm/cp operations, perform bounded item-by-item operations, and verify deletion before returning."
+    },
+    {
+      "scenarioId": "canonical-physical-path-identity",
+      "boundary": "windows-filesystem",
+      "outcome": "PASS",
+      "evidence": "Candidate roots and declared boundary roots resolve through the nearest stable existing ancestor to one physical identity. Under those trusted roots, ordinary descendants remain lexically anchored instead of comparing transient Windows short/long aliases; only actual symbolic-link or Junction segments require physical destination resolution. Repository-relative lexical containment still blocks undeclared traversal."
+    },
+    {
+      "scenarioId": "root-anchored-scratch-containment",
+      "boundary": "windows-filesystem",
+      "outcome": "PASS",
+      "evidence": "Scratch and declared writable paths are validated relative to their previously canonicalized physical roots. Ordinary and non-existing descendants remain anchored to the approved root, while every existing symbolic-link or Junction segment resolves to a destination that must remain inside that root. Rename validates both its source and destination write boundaries."
+    },
+    {
+      "scenarioId": "concurrent-scratch-physical-checks",
+      "boundary": "windows-filesystem",
+      "outcome": "PASS",
+      "evidence": "Two guarded descendant processes repeatedly create, exclusively open, close and remove transient lock-shaped scratch paths. Ordinary paths avoid hosted-Windows physical-alias false positives, while the existing outside-Junction escape probe remains blocked."
+    },
+    {
+      "scenarioId": "internal-scratch-link-containment",
+      "boundary": "windows-filesystem",
+      "outcome": "PASS",
+      "evidence": "A scratch-local symbolic link or Junction can write only to a destination that independently resolves inside the same trusted scratch root; the link and target are then removed without widening candidate write authority."
+    },
+    {
+      "scenarioId": "bounded-scratch-denial-diagnostics",
+      "boundary": "windows-filesystem",
+      "outcome": "PASS",
+      "evidence": "Denied scratch writes expose only a bounded containment subcase and filesystem operation token. Absolute paths and raw filesystem details are excluded, while physical-segment escapes remain distinguishable from lexical, final-resolution and unavailable-boundary failures."
+    },
+    {
+      "scenarioId": "independent-auditor-command-policy",
+      "boundary": "independent-trust-domain",
+      "outcome": "PASS",
+      "evidence": "The H5 auditor independently validates plan schemaVersion 4 and the complete structured command policy. A legacy string command is explicitly rejected."
+    },
+    {
+      "scenarioId": "historical-contract-migration",
+      "boundary": "compatibility-regression",
+      "outcome": "PASS",
+      "evidence": "H1-H6 fixtures retain their original outcome semantics while executable fixtures now use the structured command contract. Dirty-validator tests now require pre-write BLOCKED with unchanged candidate bytes."
+    }
+  ],
+  "acceptance": {
+    "executable_and_arguments_are_structurally_separated": true,
+    "shell_execution_is_disabled": true,
+    "resource_limits_are_bounded": true,
+    "environment_is_minimal_and_output_is_redacted": true,
+    "network_is_denied_by_default_and_allow_requires_invariant_policy": true,
+    "node_and_python_validators_cannot_change_candidate_source_bytes": true,
+    "git_candidate_boundary_detects_unexpected_side_effects": true,
+    "git_repository_discovery_uses_executor_owned_configuration": true,
+    "windows_file_removal_and_recursive_copy_are_verified": true,
+    "windows_short_and_long_path_aliases_share_one_physical_identity": true,
+    "windows_namespaced_device_paths_share_one_physical_identity": true,
+    "scratch_physical_containment_is_root_anchored": true,
+    "scratch_junction_escapes_are_denied": true,
+    "scratch_denials_are_bounded_by_subcase_and_operation": true,
+    "scratch_concurrent_physical_checks_are_stable": true,
+    "scratch_internal_links_remain_inside_boundary": true,
+    "rename_validates_source_and_destination_write_boundaries": true,
+    "independent_auditor_validates_command_contracts": true,
+    "host_results_remain_non_formal_until_h8_ci_qualification": true
+  },
+  "isolatedAcceptance": {
+    "status": "PASS",
+    "command": "node harness/tests/run-all.mjs",
+    "safeProfileCommand": "node harness/validators/run.mjs lint",
+    "safeProfileStatus": "PASS",
+    "testFileCount": 34,
+    "passedTestFileCount": 34,
+    "failedTestFileCount": 0,
+    "networkUsed": false,
+    "externalServicesCalled": false,
+    "formalEligible": false
+  },
+  "sourceHashes": {
+    ".harness/harness.config.example.json": "sha256:039975bbf514fcff07d3bcef582c3092a8139beae5956e4ffc779f4089cb37e1",
+    ".harness/source-authority.json": "sha256:512a478dbbb1fe9cb516bd8b7c69102ff593b63a98781942903eeead03db20d6",
+    "harness/auditor/lib/auditor.mjs": "sha256:468676b0f812e891a9117485077295580434691535c88073a23f11364b654bc0",
+    "harness/executor/network-deny.cjs": "sha256:fe319e9b1fe7d24b718ac47aabbc581999e724c892a4fffb3b3693f23120903c",
+    "harness/executor/python/sitecustomize.py": "sha256:d95f0544e0f4ee0d15550f47ffdaa3211e61fd068a75afb39e1e8a583c1a374d",
+    "harness/lib/config.mjs": "sha256:b3774b437cd3a53ee19d5cabead337ae6a01dba667e385a4be1bd6d4ea6bd9d3",
+    "harness/lib/repo.mjs": "sha256:3cd7017d372d38220ef3a35f8d934614e5532fc78f77bef3bc67dbcd6753ece5",
+    "harness/lib/source-authority.mjs": "sha256:c725a2f07181385a0c1291ee7aae30effd2822bd3cc531edda1d3c0dcc96339e",
+    "harness/lib/source-validator.mjs": "sha256:779083f8460c1a342b261ae66a8540cb0be90063f0553f91314aced5af16f17f",
+    "harness/lib/validation-planner.mjs": "sha256:61b7cf9b3ec25ef47c9801b8ecd00875e29747d063ea4ef4473fedb8040ef737",
+    "harness/lib/validator.mjs": "sha256:24aac8668a9066b2b4e513754a6a0b8e3c7039d7fb18ca1db1acf2a07bd5d4ab",
+    "harness/lib/v4/outcome-engine.mjs": "sha256:1046a0680ca99c776715632887274397525472c80411f162e944a0a192d028cd",
+    "harness/lib/v4/safe-executor.mjs": "sha256:bc96cf648eb71e4b58eb9682db8cc4f587c0149dab5a77e895bf0db4cf5f2493",
+    "harness/tests/closeout.test.mjs": "sha256:2c7718f8cfc2d016ef0e73d273fc874b39a8c0403bb419adf5be6338a8efa128",
+    "harness/tests/config-health.test.mjs": "sha256:b2e2507e5b681fdbc32f878fa23cbdf1c006524f834f38fd55b617fbba2b2472",
+    "harness/tests/pr10-report-ci.test.mjs": "sha256:5851a78c53a937a2eac430c22ad6864593c4d02b29d76a9148f11e0f95ea7289",
+    "harness/tests/run-all.mjs": "sha256:28252da49e653461345d1d7fb99e9a56a2ca314a43ec7fc977f50ed79c1c7818",
+    "harness/tests/source-authority.test.mjs": "sha256:0abb98835e4fcd2052e0ddfd2de301e64b7d95737b7d799d87a7d0b29fc43125",
+    "harness/tests/source-validator.test.mjs": "sha256:2827cfa107fc8b45b677d2863be01684184611822fc3e8b0ffa26f72e87898f2",
+    "harness/tests/v4-h1-fail-closed.test.mjs": "sha256:73d1bff533fd2c0725dc9490a2a53b189dd8d3136265d5d9df03a61d705f5217",
+    "harness/tests/v4-h2-evidence-chain.test.mjs": "sha256:612b1d18da5058f455fc49783266d936d5501a27b34b660a32b7ee359e30e6c3",
+    "harness/tests/v4-h3-git-candidate.test.mjs": "sha256:d7bc052e43b3423a14fd52dc2db9c1c2ee83c68ee3fa07671870beda08856399",
+    "harness/tests/v4-h4-invariant-catalog.test.mjs": "sha256:dd5cb636ab60cac32dd12124a432176a60512c93364c874fd726da992a4e8e9f",
+    "harness/tests/v4-h5-independent-auditor.test.mjs": "sha256:32362986e55c885466a6256de3d9550404c152e34c0902d23eb3eb5e7fc777e9",
+    "harness/tests/v4-h7-safe-executor.test.mjs": "sha256:752fa911dd01fb340b104b305e21c3f78ae5b217c97f470027c13a649b8f8bca",
+    "harness/tests/v4-trust-contract.red.mjs": "sha256:627daf61fc5690cd21be08af783a1cd3e8aaee184ca84ea8288bf3c3fadf8f55",
+    "harness/tests/validation-graph.test.mjs": "sha256:ceed639d259600438bbaee75b2f3d351033d6765506301c03c3ebc6d13fd1b7a"
+  },
+  "hardFailures": [],
+  "finalMarker": "HARNESS_V4_H7_SAFE_EXECUTOR: PASS"
+}

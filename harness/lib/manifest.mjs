@@ -1,8 +1,14 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import { normalizePath, readJson, runFile, writeJson } from './common.mjs';
+import { normalizePath, readJson, writeJson } from './common.mjs';
 import { allowedScopeFiles, allowedScopePatterns } from './scope.mjs';
+import { buildSealedRunBinding, writeSealedRunBinding } from './v4/evidence-store.mjs';
+import { captureGitCandidateSnapshot } from './v4/git-candidate.mjs';
+import {
+  buildImmutableCandidateWorkspace,
+  withAtomicResourceLock
+} from './v4/concurrent-state.mjs';
 
 export function manifestPathForRun(runDir) {
   return path.join(runDir, 'run-manifest.json');
@@ -21,12 +27,31 @@ export function buildRunManifest({
   baselineSnapshot = [],
   sessionBinding = null
 }) {
-  const branch = gitValue(root, ['rev-parse', '--abbrev-ref', 'HEAD']);
-  const commit = gitValue(root, ['rev-parse', 'HEAD']);
+  const gitCandidateBaseline = withAtomicResourceLock({
+    stateDir: path.join(root, config.stateDir || '.harness/state'),
+    resourceId: `git-candidate:${path.resolve(root)}`
+  }, () => captureGitCandidateSnapshot(root));
+  const branch = gitCandidateBaseline.branchName;
+  const commit = gitCandidateBaseline.headCommitOid;
   const taskFingerprint = hashText(normalizeTask(task));
   const maxAgeMinutes = config.policy?.planMaxAgeMinutes || 240;
+  const sealedBinding = buildSealedRunBinding({
+    root,
+    runId,
+    impactReport,
+    validationPlan,
+    baselineSnapshot,
+    config,
+    gitCandidateBaseline
+  });
+  const executionWorkspace = buildImmutableCandidateWorkspace({
+    root,
+    runId,
+    runDir,
+    candidateSnapshot: gitCandidateBaseline
+  });
   return {
-    schemaVersion: 4,
+    schemaVersion: 6,
     runId,
     createdAt,
     updatedAt: createdAt,
@@ -52,6 +77,9 @@ export function buildRunManifest({
       sessionFingerprint: sessionBinding?.fingerprint || null,
       sessionSource: sessionBinding?.source || null,
       sessionBindingRequired: sessionBinding?.required !== false,
+      leaseResourceId: sessionBinding?.resourceId || null,
+      leaseNonceFingerprint: sessionBinding?.nonceFingerprint || null,
+      workspaceDigest: executionWorkspace.workspaceDigest,
       expiresAt: new Date(Date.parse(createdAt) + maxAgeMinutes * 60 * 1000).toISOString(),
       allowedFiles: [...allowedScopeFiles(impactReport)].sort(),
       allowedPathPatterns: allowedScopePatterns(impactReport).sort(),
@@ -71,8 +99,22 @@ export function buildRunManifest({
       commandCount: Array.isArray(validationPlan?.commands) ? validationPlan.commands.length : 0,
       graphMode: validationPlan?.graph?.mode || null,
       graphNodeCount: Array.isArray(validationPlan?.graph?.nodes) ? validationPlan.graph.nodes.length : 0,
-      resultStatus: null
+      resultOutcome: null
     },
+    evidence: {
+      schemaVersion: 1,
+      required: true,
+      bindingRecord: 'run-binding.json',
+      sealedBinding
+    },
+    gitCandidate: {
+      schemaVersion: 1,
+      contractVersion: 'harness-git-candidate-v4.0.0',
+      baseline: gitCandidateBaseline,
+      validation: null,
+      formalCandidate: null
+    },
+    executionWorkspace,
     artifacts: normalizeArtifacts(root, artifacts)
   };
 }
@@ -82,6 +124,13 @@ export function fingerprintTask(task) {
 }
 
 export function writeRunManifest({ runDir, manifest }) {
+  if ((manifest?.schemaVersion || 0) >= 6 && !manifest?.gitCandidate?.baseline?.snapshotDigest) {
+    throw new Error('HARNESS_V4_GIT_CANDIDATE_BINDING_REQUIRED');
+  }
+  if ((manifest?.schemaVersion || 0) >= 5) {
+    if (!manifest.evidence?.sealedBinding) throw new Error('HARNESS_V4_EVIDENCE_BINDING_REQUIRED');
+    writeSealedRunBinding({ runDir, binding: manifest.evidence.sealedBinding });
+  }
   const manifestPath = manifestPathForRun(runDir);
   writeJson(manifestPath, manifest);
   return manifestPath;
@@ -124,6 +173,8 @@ function mergeManifest(current, patch = {}) {
   if (patch.repo) next.repo = { ...(current.repo || {}), ...patch.repo };
   if (patch.task) next.task = { ...(current.task || {}), ...patch.task };
   if (patch.binding) next.binding = { ...(current.binding || {}), ...patch.binding };
+  if (patch.gitCandidate) next.gitCandidate = { ...(current.gitCandidate || {}), ...patch.gitCandidate };
+  if (patch.executionWorkspace) next.executionWorkspace = { ...(current.executionWorkspace || {}), ...patch.executionWorkspace };
   return next;
 }
 
@@ -157,11 +208,6 @@ function hashText(text) {
 
 function normalizeTask(task) {
   return String(task || '').trim().replace(/\s+/g, ' ').toLowerCase();
-}
-
-function gitValue(root, args) {
-  const res = runFile('git', args, { cwd: root, timeoutMs: 5000 });
-  return res.exitCode === 0 && res.stdout.trim() ? res.stdout.trim() : null;
 }
 
 function walk(dir, out = []) {

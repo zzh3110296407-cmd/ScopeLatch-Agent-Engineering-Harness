@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "policyId": "harness-v4-h8-shadow-qualification",
+  "contractVersion": "harness-shadow-qualification-v4.1.0",
+  "requiredObservationSchemaVersion": 2,
+  "minRuns": 20,
+  "minWindowDays": 7,
+  "minTrustRootChangeRuns": 1,
+  "maxUnexplainedDecisionDivergences": 0,
+  "minBusinessProfileCoverage": 1,
+  "minReproducibilityRate": 1,
+  "maxP95DurationMs": 1800000,
+  "requiredProvider": "github-actions",
+  "requiredMode": "shadow",
+  "requiredJudgeSource": "protected-base",
+  "requiredDrills": [
+    "rollback",
+    "compromised-judge"
+  ],
+  "promotionMode": "shadow-only"
+}

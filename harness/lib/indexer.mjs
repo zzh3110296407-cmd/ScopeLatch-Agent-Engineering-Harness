@@ -154,11 +154,15 @@ function inferKind(file) {
 
 function inferPackage(file) {
   const f = normalizePath(file);
+  const phaseApp = f.match(/^Project Codes\/([^/]+)\/Codes\//);
+  if (phaseApp) return `${phaseApp[1].toLowerCase().replace(/\s+/g, '-')}-app`;
+  if (f.startsWith('Database/')) return 'database';
   if (f.startsWith('harness/') || f.startsWith('.harness/')) return 'harness';
   if (f.startsWith('.codex/')) return 'codex-policy';
-  if (f.startsWith('docs/')) return 'documentation';
-  if (f.startsWith('examples/')) return 'examples';
-  if (f.startsWith('scripts/')) return 'tooling';
+  if (f.startsWith('Analyze Stories/')) return 'story-analyzer-reference';
+  if (f.startsWith('Review story agent architecture/')) return 'architecture-docs';
+  if (f.startsWith('UI Design/')) return 'ui-design';
+  if (f.startsWith('Project Index/')) return 'project-index';
   return f.split('/')[0] || 'root';
 }
 
@@ -200,26 +204,32 @@ function riskCategories(file, config) {
 function inferOwner(file, config) {
   const f = normalizePath(file);
   if (f.startsWith('harness/') || f.startsWith('.harness/') || f.startsWith('.codex/')) return 'harness-control';
+  if (f.startsWith('Database/')) return 'database';
   const canonical = normalizePath(config.sourceAuthority?.root || '');
-  const sourcePrefix = canonical && canonical !== '.' ? `${canonical}/` : '';
-  const inCanonicalSource = canonical === '.' || (sourcePrefix && f.startsWith(sourcePrefix));
-  const relative = sourcePrefix && f.startsWith(sourcePrefix) ? f.slice(sourcePrefix.length) : f;
-  if (inCanonicalSource && /(^|\/)backend\//.test(relative)) return 'source-backend';
-  if (inCanonicalSource && /(^|\/)frontend\//.test(relative)) return 'source-frontend';
-  if (inCanonicalSource && f.startsWith('docs/')) return 'documentation';
-  if (inCanonicalSource) return 'source-authority';
+  const phase = config.sourceAuthority?.phase || 'current';
+  if (canonical && f.startsWith(`${canonical}/app/backend/`)) return `phase-${phase}-backend`;
+  if (canonical && f.startsWith(`${canonical}/app/frontend/`)) return `phase-${phase}-frontend`;
+  if (canonical && f.startsWith(`${canonical}/`)) return `phase-${phase}-docs`;
+  if (f.startsWith('Analyze Stories/')) return 'story-analyzer-reference';
+  if (f.startsWith('Review story agent architecture/')) return 'architecture';
+  if (f.startsWith('UI Design/')) return 'ui-design';
+  if (f.startsWith('Project Index/')) return 'project-index';
   return 'project-general';
 }
 
 function ownerGlobs(owner, config) {
   const canonical = normalizePath(config.sourceAuthority?.root || '');
-  const prefix = canonical && canonical !== '.' ? `${canonical}/` : '';
+  const phase = config.sourceAuthority?.phase || 'current';
   const globs = {
     'harness-control': ['harness/**', '.harness/**', '.codex/**'],
-    'source-backend': [`${prefix}**/backend/**`],
-    'source-frontend': [`${prefix}**/frontend/**`],
-    'source-authority': [canonical && canonical !== '.' ? `${canonical}/**` : '**/*'],
-    documentation: ['docs/**'],
+    database: ['Database/**'],
+    [`phase-${phase}-backend`]: canonical ? [`${canonical}/app/backend/**`] : [],
+    [`phase-${phase}-frontend`]: canonical ? [`${canonical}/app/frontend/**`] : [],
+    [`phase-${phase}-docs`]: canonical ? [`${canonical}/**`] : [],
+    'story-analyzer-reference': ['Analyze Stories/**'],
+    architecture: ['Review story agent architecture/**'],
+    'ui-design': ['UI Design/**'],
+    'project-index': ['Project Index/**'],
     'project-general': ['**/*']
   };
   return globs[owner] || ['**/*'];

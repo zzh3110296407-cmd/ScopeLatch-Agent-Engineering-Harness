@@ -1,7 +1,12 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import { ensureDir, readJson, writeJson } from './common.mjs';
+import {
+  acquireLease,
+  leasePathFor,
+  readLease,
+  releaseLease
+} from './v4/concurrent-state.mjs';
 
 const sessionEnvironmentKeys = [
   'HARNESS_SESSION_ID',
@@ -28,39 +33,61 @@ export function createSessionLease({ root, config, runId, env = process.env }) {
     value: crypto.randomBytes(32).toString('base64url'),
     source: 'generated-execution-capability'
   };
-  const expiresAt = new Date(Date.now() + (config.policy?.planMaxAgeMinutes || 240) * 60 * 1000).toISOString();
-  const leaseDir = path.join(root, config.stateDir || '.harness/state', 'session-leases');
-  const leasePath = path.join(leaseDir, `${runId}.json`);
-  ensureDir(leaseDir);
-  pruneExpiredSessionLeases(leaseDir);
-  writeJson(leasePath, {
-    schemaVersion: 1,
+  const stateDir = path.join(root, config.stateDir || '.harness/state');
+  const resourceId = `run:${runId}`;
+  const lease = acquireLease({
+    stateDir,
+    resourceId,
     runId,
-    sessionId: identity.value,
-    source: identity.source,
-    expiresAt
+    ownerId: identity.value,
+    ttlMs: (config.policy?.planMaxAgeMinutes || 240) * 60 * 1000,
+    metadata: {
+      source: identity.source,
+      purpose: 'session-binding'
+    }
   });
-  try { fs.chmodSync(leasePath, 0o600); } catch { /* Best effort on Windows. */ }
   return {
     fingerprint: fingerprintSession(identity.value),
+    nonceFingerprint: fingerprintSession(lease.nonce),
     source: identity.source,
     required: config.policy?.requireSessionBinding !== false,
-    expiresAt,
-    leasePath
+    expiresAt: lease.expiresAt,
+    leasePath: lease.leasePath,
+    resourceId
   };
 }
 
 export function removeSessionLease({ root, config, runId }) {
-  const file = path.join(root, config.stateDir || '.harness/state', 'session-leases', `${runId}.json`);
-  try { fs.rmSync(file); } catch { /* Lease may already be absent. */ }
+  const stateDir = path.join(root, config.stateDir || '.harness/state');
+  const resourceId = `run:${runId}`;
+  const lease = readLease({ stateDir, resourceId, includeExpired: true });
+  if (lease) {
+    releaseLease({
+      stateDir,
+      resourceId,
+      ownerId: lease.ownerId,
+      nonce: lease.nonce,
+      reason: 'run-closeout'
+    });
+    return;
+  }
+  const legacyPath = path.join(stateDir, 'session-leases', `${runId}.json`);
+  try { fs.unlinkSync(legacyPath); } catch (error) {
+    if (error?.code !== 'ENOENT') throw error;
+  }
 }
 
 export function readSessionLease({ root, config, runId }) {
-  const file = path.join(root, config.stateDir || '.harness/state', 'session-leases', `${runId}.json`);
-  const lease = readJson(file, null);
-  if (!lease?.sessionId || lease.runId !== runId) return null;
-  if (Date.parse(lease.expiresAt || '') < Date.now()) return null;
-  return lease;
+  const stateDir = path.join(root, config.stateDir || '.harness/state');
+  const resourceId = `run:${runId}`;
+  const lease = readLease({ stateDir, resourceId });
+  if (!lease || lease.runId !== runId) return null;
+  return {
+    ...lease,
+    sessionId: lease.ownerId,
+    source: lease.metadata?.source || 'unknown',
+    leasePath: leasePathFor(stateDir, resourceId)
+  };
 }
 
 export function codexBindingEnvironment({ root, config, manifest }) {
@@ -69,20 +96,15 @@ export function codexBindingEnvironment({ root, config, manifest }) {
   if (fingerprintSession(lease.sessionId) !== manifest.binding?.sessionFingerprint) {
     throw new Error(`Session lease fingerprint mismatch for Harness run ${manifest.runId}.`);
   }
+  if (fingerprintSession(lease.nonce) !== manifest.binding?.leaseNonceFingerprint) {
+    throw new Error(`Session lease nonce mismatch for Harness run ${manifest.runId}.`);
+  }
+  if (lease.resourceId !== manifest.binding?.leaseResourceId) {
+    throw new Error(`Session lease resource mismatch for Harness run ${manifest.runId}.`);
+  }
   return {
     HARNESS_RUN_ID: manifest.runId,
     HARNESS_TASK_FINGERPRINT: manifest.binding?.taskFingerprint || manifest.task?.fingerprint || '',
     HARNESS_SESSION_ID: lease.sessionId
   };
-}
-
-function pruneExpiredSessionLeases(dir) {
-  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    if (!entry.isFile() || !entry.name.endsWith('.json')) continue;
-    const file = path.join(dir, entry.name);
-    const lease = readJson(file, null);
-    if (!lease || Date.parse(lease.expiresAt || '') < Date.now()) {
-      try { fs.rmSync(file); } catch { /* Best effort cleanup. */ }
-    }
-  }
 }

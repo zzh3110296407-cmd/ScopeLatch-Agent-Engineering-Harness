@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 1,
+  "milestone": "H8",
+  "contractVersion": "harness-trust-v4.0.0",
+  "generatedAt": "2026-07-30T18:45:00+08:00",
+  "predecessor": {
+    "milestone": "H7",
+    "reportPath": ".harness/docs/harness-v4-h7-safe-executor-report.json",
+    "reportDigest": "sha256:5d38067d8841c045251a40ef0223d16a7a563c35cdd682b41c2d3d0781c23469",
+    "regressionStatus": "PASS"
+  },
+  "infrastructureAcceptance": {
+    "status": "PASS",
+    "networkUsed": false,
+    "externalServicesCalled": false,
+    "workflowSyntaxAndPolicyStaticChecksPassed": true,
+    "qualificationAlgorithmPositiveAndNegativeMatrixPassed": true,
+    "rollbackDrillPassed": true,
+    "compromisedJudgeDrillPassed": true,
+    "coldCachedReproductionEnforced": true,
+    "businessProfileCoverageEnforced": true,
+    "trustRootAdversarialCorpusEnforced": true,
+    "protectedBaseAdversarialSourcesPinned": true,
+    "candidateControlledJudgeRejected": true,
+    "sameCommitJudgeRejected": true,
+    "independentAuditorRequiredForEveryV4Pass": true,
+    "nonPassV4OutcomesBlockQualification": true,
+    "boundedRemoteExecutionDiagnosticsEnforced": true,
+    "boundedValidationCommandDiagnosticsEnforced": true,
+    "boundedTestFailureClassificationsEnforced": true,
+    "boundedValidationStepFailureIdentityEnforced": true,
+    "canonicalTrackedTextHashingEnforced": true,
+    "executorOwnedGitRepositoryConfigurationEnforced": true,
+    "protectedBaseBootstrapGateEnforced": true,
+    "windowsGitAndUtf8SemanticsEnforced": true,
+    "verifiedCrossVolumeFileOperationsEnforced": true,
+    "shadowKnowledgeReadOnlyEnforced": true,
+    "runtimeWriteLeaseNarrowed": true,
+    "legacyV1ObservationsReadableButNotQualifying": true,
+    "repositorySpecificApplicationDependenciesRequired": false,
+    "promotionRemainsDisabled": true
+  },
+  "shadowWindow": {
+    "status": "BLOCKED_PENDING_CI_WINDOW",
+    "policyId": "harness-v4-h8-shadow-qualification",
+    "requiredProvider": "github-actions",
+    "requiredObservationSchemaVersion": 2,
+    "requiredRuns": 20,
+    "requiredWindowDays": 7,
+    "requiredTrustRootChangeRuns": 1,
+    "observedQualifiedRuns": 0,
+    "observedWindowDays": 0,
+    "unexplainedDecisionDivergences": 0,
+    "businessProfileCoverage": 0,
+    "reproducibilityRate": 0,
+    "p95DurationMs": null,
+    "reasonCode": "H8_SHADOW_WINDOW_NOT_OBSERVED"
+  },
+  "actionObservationBatch": {
+    "status": "NOT_STARTED_FOR_THIS_REPOSITORY",
+    "requestedAttemptCount": 0,
+    "completedAttemptCount": 0,
+    "qualifiedRunCount": 0,
+    "diagnosticStatus": "NO_SCOPELATCH_GITHUB_ACTIONS_OBSERVATIONS",
+    "qualificationRule": "Only sealed observations produced by this repository and accepted by the protected-base qualification policy may count toward H8.",
+    "attempts": []
+  },
+  "scope": {
+    "repository": "zzh3110296407-cmd/ScopeLatch-Agent-Engineering-Harness",
+    "applicationFilesChanged": false,
+    "repositorySpecificBusinessValidatorsIncluded": false,
+    "existingCiWorkflowChanged": true,
+    "newWorkflowAuthority": "shadow-only",
+    "trustedJudgeSource": "protected-base",
+    "candidateRole": "evaluated-object-only"
+  },
+  "observations": [
+    {
+      "scenarioId": "closed-shadow-observation",
+      "outcome": "PASS",
+      "evidence": "Observations are closed, content-sealed records that bind provider, run identity, candidate tree, independent Judge, profile coverage, reproduction and cost."
+    },
+    {
+      "scenarioId": "independent-protected-base-judge",
+      "outcome": "PASS",
+      "evidence": "The workflow uses separate protected-base and candidate checkouts. Candidate-controlled and same-commit Judge aliases are rejected."
+    },
+    {
+      "scenarioId": "qualification-threshold-matrix",
+      "outcome": "PASS",
+      "evidence": "Synthetic fixtures exercise the deterministic threshold evaluator but are never counted as GitHub Actions observations."
+    },
+    {
+      "scenarioId": "actual-ci-shadow-window",
+      "outcome": "BLOCKED",
+      "evidence": "This repository has zero qualifying GitHub Actions observations. H8 remains blocked until 20 qualified runs span at least seven days and include one qualifying trust-root change."
+    }
+  ],
+  "formalEligible": false,
+  "eligibleForH9": false,
+  "sourceHashes": {
+    ".gitattributes": "sha256:699088dba2d07ccc4381e1cec9d2ded57fc3ae64e62dc6ed1033f84aa4afb1fb",
+    ".github/workflows/harness-v4-shadow.yml": "sha256:cd8a2b8d22d97cd8e4db0f3dc6fa9f96c29eaa296c2f974cef58e92b3ba0d6fa",
+    ".harness/docs/harness-v4-h8-operations-runbook.md": "sha256:ca1dbf3b752f6cd9e49d5579ab8b527658dbca9937245e68a40785cba56a5b10",
+    "harness/contracts/v4/shadow-qualification-policy.json": "sha256:059da4d85a9ba238724b84e55d3c768f1b991aae9567ba8dd578fe56ed1157bf",
+    "harness/lib/v4/shadow-qualification.mjs": "sha256:711e52359425eb4c96cf93397bc07a216c9401c397be9bb22e81551fb59ca621",
+    "harness/qualification/qualify-shadow-window.mjs": "sha256:7bed7484a800ea664251b7c0c9d280e6dedb1388dc29ee6822d9937c9f42cc72",
+    "harness/qualification/run-shadow-pair.mjs": "sha256:49deb5dc301b592c22fc8493f419b64baccf4a704cf57ad0a5163c5e1e56f755",
+    "harness/tests/v4-h8-ci-shadow-qualification.test.mjs": "sha256:2308beb94faf9276f4f57337a8c2a143685521a2357fad05a041d94f15ce264d",
+    "harness/validators/run.mjs": "sha256:bcf2cdec9b6a45e5fa53fef109c58004e29d66a213b544f7e0ca8cd0faf52628"
+  },
+  "hardFailures": [
+    "H8_SHADOW_WINDOW_NOT_OBSERVED"
+  ],
+  "finalMarker": "HARNESS_V4_H8_CI_SHADOW: BLOCKED_PENDING_CI_WINDOW"
+}

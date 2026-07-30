@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -24,7 +25,21 @@ import {
 } from './lib/knowledge.mjs';
 import { closeRun } from './lib/closeout.mjs';
 import { checkCodexAvailable, runCodex } from './lib/codex-runner.mjs';
-import { codexBindingEnvironment, createSessionLease } from './lib/session-binding.mjs';
+import {
+  codexBindingEnvironment,
+  createSessionLease,
+  currentSessionIdentity,
+  fingerprintSession
+} from './lib/session-binding.mjs';
+import {
+  createCollisionResistantRunId,
+  initializeRunState,
+  readLatestRunNavigation,
+  recoverRunState,
+  reserveRunDirectory,
+  resolveAuthoritativeRunState,
+  writeLatestRunNavigation
+} from './lib/v4/concurrent-state.mjs';
 import { scanRepositorySecurity } from './lib/security-scanner.mjs';
 import { benchmarkPostCheck } from './lib/performance.mjs';
 import { readHarnessVersion } from './lib/version.mjs';
@@ -35,7 +50,7 @@ import {
   runSandboxedCommand,
   verifySandboxRuntime
 } from './lib/sandbox.mjs';
-import { ensureDir, exists, nowId, readJson, slugify, writeJson, writeText } from './lib/common.mjs';
+import { ensureDir, exists, readJson, writeJson, writeText } from './lib/common.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -65,7 +80,8 @@ async function main() {
     if (command === 'benchmark') return cmdBenchmark({ root, config, argv });
     if (command === 'sandbox') return cmdSandbox({ root, argv });
     if (command === 'knowledge') return cmdKnowledge({ root, argv });
-    if (command === 'status') return cmdStatus({ root, config });
+    if (command === 'status') return cmdStatus({ root, config, argv });
+    if (command === 'recover') return cmdRecover({ root, config, argv });
     if (command === 'init') return cmdInit({ root });
     throw new Error(`Unknown command: ${command}`);
   } catch (err) {
@@ -75,7 +91,7 @@ async function main() {
 }
 
 function help() {
-  console.log(`ScopeLatch Agent Engineering Harness
+  console.log(`Codex Harness Engine
 
 Usage:
   node harness/cli.mjs plan "<task>"
@@ -99,14 +115,15 @@ Usage:
   node harness/cli.mjs knowledge --list
   node harness/cli.mjs knowledge --promote <candidate-id> --reviewer <name> --reason <reason>
   node harness/cli.mjs knowledge --reject <candidate-id> --reviewer <name> --reason <reason>
-  node harness/cli.mjs status
+  node harness/cli.mjs status [--run <run-id>]
+  node harness/cli.mjs recover --run <run-id> --action resume|abort
   node harness/cli.mjs version
   node harness/cli.mjs init
 `);
 }
 
 function cmdPlan({ root, config, task }) {
-  if (!task.trim()) throw new Error('Missing task text. Example: node harness/cli.mjs plan "Implement an order refund endpoint"');
+  if (!task.trim()) throw new Error('Missing task text. Example: node harness/cli.mjs plan "实现订单退款接口"');
   const runData = createRun({ root, config, task });
   printRunSummary(runData);
   return runData;
@@ -121,7 +138,7 @@ function cmdPrompt({ root, config, task }) {
 
 function cmdRun({ root, config, argv }) {
   const task = taskFromArgs(argv, runOptionFlags());
-  if (!task.trim()) throw new Error('Missing task text. Example: node harness/cli.mjs run "Fix API validation drift"');
+  if (!task.trim()) throw new Error('Missing task text. Example: node harness/cli.mjs run "修复角色生成提示吸收缺失"');
   if (argv.includes('--skip-validate')) {
     throw new Error('--skip-validate is not supported for `run`; use `plan` when only planning is intended.');
   }
@@ -137,7 +154,7 @@ function cmdRun({ root, config, argv }) {
     printGuardResult({ root, ...closeout.postValidationGuard });
   }
   printReportResult({ root, ...closeout.report });
-  if (closeout.status === 'failed') process.exitCode = 1;
+  if (closeout.status !== 'passed') process.exitCode = 1;
   return { runData, closeout };
 }
 
@@ -150,7 +167,7 @@ function cmdValidate({ root, config, argv }) {
   if (closeout.validation) printValidationResult({ root, ...closeout.validation });
   if (closeout.postValidationGuard) printGuardResult({ root, ...closeout.postValidationGuard });
   printReportResult({ root, ...closeout.report });
-  if (closeout.status === 'failed') process.exitCode = 1;
+  if (closeout.status !== 'passed') process.exitCode = 1;
   return closeout;
 }
 
@@ -205,7 +222,7 @@ function cmdCi({ root, config, argv }) {
     printKnowledgeResult({ root, ...closeout.knowledge });
   }
   console.log(`CI status: ${closeout.status}\n`);
-  if (closeout.status === 'failed') process.exitCode = 1;
+  if (closeout.status !== 'passed') process.exitCode = 1;
   return {
     runData,
     guard: closeout.guard.result,
@@ -280,7 +297,7 @@ function cmdCodex({ root, config, task }) {
   if (closeout.knowledge?.status && closeout.knowledge.status !== 'skipped') {
     printKnowledgeResult({ root, ...closeout.knowledge });
   }
-  if (closeout.status === 'failed') process.exitCode = 1;
+  if (closeout.status !== 'passed') process.exitCode = 1;
   return { runData, codex: res, closeout };
 }
 
@@ -500,9 +517,9 @@ function printGuardResult({ root, result, resultPath, manifestPath }) {
 }
 
 function printValidationResult({ root, result, resultPath, dossierPath, manifestPath }) {
-  console.log(`\nValidation status: ${result.status}`);
+  console.log(`\nValidation outcome: ${result.outcome}`);
   for (const r of result.results) {
-    console.log(`- ${r.id}: ${r.status}${r.command ? ` (${r.command})` : ''}`);
+    console.log(`- ${r.id}: ${r.outcome}${r.command ? ` (${r.command})` : ''}`);
   }
   console.log(`\nResult: ${path.relative(root, resultPath)}`);
   console.log(`Dossier: ${path.relative(root, dossierPath)}\n`);
@@ -532,20 +549,30 @@ function printKnowledgeResult({ root, status, count, failuresPath, candidatePath
   if (rulesPath) console.log(`Rules: ${path.relative(root, rulesPath)}`);
 }
 
-function cmdStatus({ root, config }) {
-  const stateFile = path.join(root, config.stateDir, 'latest-run.json');
-  const state = readJson(stateFile, null);
-  const manifest = state?.files?.runManifest ? readRunManifest(state.files.runManifest) : null;
+function cmdStatus({ root, config, argv = [] }) {
+  const stateDir = path.join(root, config.stateDir);
+  const navigation = readLatestRunNavigation({ stateDir });
+  const explicitRunId = getArg(argv, '--run');
+  const authoritativeState = explicitRunId
+    ? resolveAuthoritativeRunState({ stateDir, runId: explicitRunId })
+    : null;
+  const runDir = authoritativeState
+    ? path.join(root, config.outputDir, authoritativeState.runId)
+    : null;
+  const manifest = runDir ? readRunManifest(runDir) : null;
   const configHealth = buildConfigHealth({ root, config });
   console.log(JSON.stringify({
     configHealth,
     index: readIndexStatus(root),
-    latestRun: state ? {
-      runDir: path.relative(root, state.runDir),
-      task: state.task,
-      risk: state.risk,
-      generatedAt: state.generatedAt,
-      files: state.files,
+    latestRunNavigation: navigation ? {
+      authority: false,
+      runId: navigation.runId,
+      runDir: path.relative(root, navigation.runDir),
+      task: navigation.task,
+      generatedAt: navigation.generatedAt
+    } : null,
+    authoritativeRun: authoritativeState ? {
+      state: authoritativeState,
       manifest: manifest ? {
         schemaVersion: manifest.schemaVersion,
         status: manifest.status,
@@ -556,6 +583,54 @@ function cmdStatus({ root, config }) {
     } : null
   }, null, 2));
   if (configHealth.status === 'failed') process.exitCode = 1;
+}
+
+function cmdRecover({ root, config, argv }) {
+  const runId = getArg(argv, '--run');
+  const action = getArg(argv, '--action');
+  if (!runId) throw new Error('Missing explicit --run <run-id>.');
+  if (!['resume', 'abort'].includes(action)) throw new Error('--action must be resume or abort.');
+  const identity = currentSessionIdentity() || {
+    value: crypto.randomBytes(32).toString('base64url'),
+    source: 'generated-recovery-capability'
+  };
+  const stateDir = path.join(root, config.stateDir);
+  const recovered = recoverRunState({
+    stateDir,
+    runId,
+    action,
+    ownerId: identity.value,
+    ttlMs: (config.policy?.planMaxAgeMinutes || 240) * 60 * 1000
+  });
+  const runDir = path.join(root, config.outputDir, runId);
+  updateRunManifest({
+    runDir,
+    patch: action === 'resume'
+      ? {
+          status: 'planned',
+          phase: 'recovered-resume',
+          binding: {
+            sessionFingerprint: fingerprintSession(identity.value),
+            sessionSource: identity.source,
+            leaseResourceId: recovered.lease.resourceId,
+            leaseNonceFingerprint: fingerprintSession(recovered.lease.nonce),
+            expiresAt: recovered.lease.expiresAt
+          }
+        }
+      : {
+          status: 'blocked',
+          phase: 'recovered-abort'
+        }
+  });
+  console.log(JSON.stringify({
+    runId,
+    action,
+    lifecycle: recovered.state.lifecycle,
+    revision: recovered.state.revision,
+    stateDigest: recovered.state.stateDigest,
+    completionSynthesized: false
+  }, null, 2));
+  return recovered;
 }
 
 function readIndexStatus(root) {
@@ -617,10 +692,10 @@ function createRun({ root, config, task, baseRef = null, includeWorkingTreeChang
     applicableRules
   });
 
-  const runId = `${nowId()}-${slugify(task)}`;
-  const runDir = path.join(root, config.outputDir, runId);
+  const runId = createCollisionResistantRunId({ taskSlug: task });
+  const reserved = reserveRunDirectory({ root, outputDir: config.outputDir, runId });
+  const runDir = reserved.runDir;
   const sessionBinding = createSessionLease({ root, config, runId });
-  ensureDir(runDir);
   const contextPath = path.join(runDir, 'context-pack.md');
   const contextJsonPath = path.join(runDir, 'context-pack.json');
   const impactPath = path.join(runDir, 'impact-report.json');
@@ -655,10 +730,21 @@ function createRun({ root, config, task, baseRef = null, includeWorkingTreeChang
       runManifest: manifestPath
     }
   });
+  const stateDir = path.join(root, config.stateDir);
+  initializeRunState({
+    stateDir,
+    runId,
+    ownerFingerprint: sessionBinding.fingerprint,
+    nonceFingerprint: sessionBinding.nonceFingerprint,
+    workspace: manifest.executionWorkspace,
+    generatedAt: manifest.createdAt,
+    data: {
+      taskFingerprint: manifest.task.fingerprint,
+      manifestPath: path.relative(root, manifestPath).replace(/\\/g, '/')
+    }
+  });
   writeRunManifest({ runDir, manifest });
 
-  const stateDir = path.join(root, config.stateDir);
-  ensureDir(stateDir);
   const state = {
     task,
     runId,
@@ -678,7 +764,15 @@ function createRun({ root, config, task, baseRef = null, includeWorkingTreeChang
       runManifest: manifestPath
     }
   };
-  writeJson(path.join(stateDir, 'latest-run.json'), state);
+  writeLatestRunNavigation({
+    stateDir,
+    runId,
+    runDir,
+    task,
+    generatedAt: state.generatedAt,
+    files: state.files,
+    risk: state.risk
+  });
 
   return { runDir, contextPath, impactPath, validationPath, promptPath, manifestPath, manifest, contextPack, impactReport, validationPlan, applicableRules };
 }
@@ -698,6 +792,9 @@ function printRunSummary(runData) {
   console.log(`- ${rel(runData.validationPath)}`);
   console.log(`- ${rel(runData.promptPath)}`);
   console.log(`- ${rel(runData.manifestPath)}\n`);
+  if (!runData.impactReport.writeTargets.length) {
+    console.log('No write targets were authorized. Inspect the repository read-only, then create a fresh plan listing exact file paths.\n');
+  }
 }
 
 function getArg(argv, name) {

@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { runFile } from './common.mjs';
+import { safeExecute } from './v4/safe-executor.mjs';
 
 export function runValidationCapability({ root, authority, capability, timeoutMs = 15 * 60 * 1000 }) {
   if (authority?.status && authority.status !== 'manifest-ready') {
@@ -13,11 +13,14 @@ export function runValidationCapability({ root, authority, capability, timeoutMs
   const results = [];
   for (const [index, step] of steps.entries()) {
     const cwd = resolveStepCwd(root, authority.root, step.cwd);
-    const invocation = platformInvocation(step.command, step.args || []);
-    const result = runFile(invocation.command, invocation.args, {
+    const contract = stepContract(authority.validationProfile, step, timeoutMs);
+    const result = safeExecute({
+      root,
+      contract,
       cwd,
       timeoutMs: step.timeoutMs || timeoutMs,
-      env: step.env || {}
+      environment: step.env || {},
+      protectCandidate: true
     });
     results.push({
       index,
@@ -28,13 +31,30 @@ export function runValidationCapability({ root, authority, capability, timeoutMs
       durationMs: result.durationMs,
       stdout: result.stdout,
       stderr: result.stderr,
-      error: result.error
+      error: result.error,
+      outcome: result.outcome,
+      executor: {
+        contractVersion: result.contractVersion,
+        commandContractDigest: result.commandContractDigest,
+        shellUsed: result.shellUsed,
+        networkPolicy: result.networkPolicy,
+        environmentKeys: result.environmentKeys,
+        limits: result.limits,
+        enforcement: result.enforcement,
+        formalEligible: result.formalEligible,
+        formalIneligibilityReason: result.formalIneligibilityReason,
+        timedOut: result.timedOut,
+        outputTruncated: result.outputTruncated,
+        boundaryViolation: result.boundaryViolation,
+        changedPaths: result.changedPaths,
+        forbiddenWrites: result.forbiddenWrites
+      }
     });
-    if (result.exitCode !== 0) {
+    if (result.outcome !== 'PASS') {
       return {
         schemaVersion: 1,
         capability,
-        status: 'failed',
+        status: result.outcome === 'BLOCKED' ? 'blocked' : 'failed',
         exitCode: result.exitCode,
         steps: results
       };
@@ -64,20 +84,33 @@ function resolveStepCwd(root, sourceRoot, cwd) {
   throw new Error(`Unsupported validation cwd: ${cwd}.`);
 }
 
-function platformInvocation(command, args) {
-  if (process.platform !== 'win32' || !['npm', 'npx', 'pnpm', 'yarn'].includes(command)) {
-    return { command, args };
-  }
-  const batchCommand = `${command}.cmd`;
-  const commandLine = [batchCommand, ...args].map(quoteCmdArg).join(' ');
+function stepContract(profile, step, timeoutMs) {
+  const defaults = profile?.policyDefaults || {};
+  const stepPolicy = step.policy || {};
   return {
-    command: process.env.ComSpec || 'cmd.exe',
-    args: ['/d', '/s', '/c', commandLine]
+    schemaVersion: 1,
+    executable: step.command,
+    args: step.args || [],
+    policy: {
+      resources: {
+        ...(defaults.resources || {}),
+        ...(stepPolicy.resources || {}),
+        timeoutMs: step.timeoutMs || stepPolicy.resources?.timeoutMs || defaults.resources?.timeoutMs || timeoutMs
+      },
+      network: {
+        ...(defaults.network || {}),
+        ...(stepPolicy.network || {})
+      },
+      environment: {
+        ...(defaults.environment || {}),
+        ...(stepPolicy.environment || {}),
+        allow: stepPolicy.environment?.allow || defaults.environment?.allow || [],
+        values: {
+          ...(defaults.environment?.values || {}),
+          ...(stepPolicy.environment?.values || {})
+        }
+      },
+      writablePaths: stepPolicy.writablePaths || defaults.writablePaths || []
+    }
   };
-}
-
-function quoteCmdArg(value) {
-  const text = String(value);
-  if (/^[A-Za-z0-9_./:\\*-]+$/.test(text)) return text;
-  return `"${text.replaceAll('"', '""')}"`;
 }

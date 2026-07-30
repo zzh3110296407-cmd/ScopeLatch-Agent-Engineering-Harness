@@ -1,0 +1,243 @@
+{
+  "schemaVersion": 1,
+  "catalogId": "harness-v4-invariant-catalog",
+  "contractVersion": "harness-invariants-v4.0.0",
+  "commands": [
+    {
+      "id": "lint",
+      "label": "Lint",
+      "configKey": "lint",
+      "candidates": ["lint", "check:lint"],
+      "tier": "tier1-static",
+      "dependsOnAny": []
+    },
+    {
+      "id": "typecheck",
+      "label": "Typecheck",
+      "configKey": "typecheck",
+      "candidates": ["typecheck", "check:types", "tsc", "type-check"],
+      "tier": "tier1-static",
+      "dependsOnAny": ["lint"]
+    },
+    {
+      "id": "test",
+      "label": "Relevant or default tests",
+      "configKey": "testUnit",
+      "candidates": ["test:unit", "test"],
+      "tier": "tier2-targeted",
+      "dependsOnAny": ["lint", "typecheck"]
+    },
+    {
+      "id": "test-unit",
+      "label": "Unit tests",
+      "configKey": "testUnit",
+      "candidates": ["test:unit", "unit", "test"],
+      "tier": "tier2-targeted",
+      "dependsOnAny": ["lint", "typecheck"]
+    },
+    {
+      "id": "generate-client",
+      "label": "Generate API client/codegen",
+      "configKey": "generateClient",
+      "candidates": ["generate:client", "codegen", "generate", "openapi:generate"],
+      "tier": "tier2-targeted",
+      "dependsOnAny": ["lint", "typecheck"]
+    },
+    {
+      "id": "test-contract",
+      "label": "Contract tests",
+      "configKey": "testContract",
+      "candidates": ["test:contract", "contract:test", "test:api"],
+      "tier": "tier2-targeted",
+      "dependsOnAny": ["generate-client", "typecheck", "lint"]
+    },
+    {
+      "id": "test-integration",
+      "label": "Integration tests",
+      "configKey": "testIntegration",
+      "candidates": ["test:integration", "integration:test", "test:int"],
+      "tier": "tier3-integration",
+      "dependsOnAny": ["test-contract", "test-unit", "test", "typecheck", "lint"]
+    },
+    {
+      "id": "test-e2e",
+      "label": "E2E tests",
+      "configKey": "testE2E",
+      "candidates": ["test:e2e", "e2e", "e2e:test"],
+      "tier": "tier3-integration",
+      "dependsOnAny": ["test-integration", "test-contract", "build", "typecheck", "lint"]
+    },
+    {
+      "id": "build",
+      "label": "Build",
+      "configKey": "build",
+      "candidates": ["build", "compile"],
+      "tier": "tier3-integration",
+      "dependsOnAny": ["typecheck", "lint"]
+    },
+    {
+      "id": "full-ci",
+      "label": "Full CI equivalent",
+      "configKey": "fullCI",
+      "candidates": ["ci", "check", "verify"],
+      "tier": "tier3-integration",
+      "dependsOnAny": ["test-e2e", "test-integration", "build", "lint"]
+    }
+  ],
+  "invariants": [
+    {
+      "id": "baseline-behavior",
+      "version": 1,
+      "acceptanceId": "baseline_behavior_is_executed",
+      "description": "Every plan executes at least one behavior-level test.",
+      "trigger": {"always": true},
+      "dependencies": [],
+      "commands": ["$behavior-test"],
+      "selectorMode": "none",
+      "formalEligible": true
+    },
+    {
+      "id": "static-lint",
+      "version": 1,
+      "acceptanceId": "static_lint_applies_to_nontrivial_or_build_changes",
+      "description": "Nontrivial and build-system changes execute lint.",
+      "trigger": {
+        "any": [
+          {"riskIn": ["L2", "L3", "L4"]},
+          {"categoryAny": ["buildSystem"]}
+        ]
+      },
+      "dependencies": [],
+      "commands": ["lint"],
+      "selectorMode": "none",
+      "formalEligible": true
+    },
+    {
+      "id": "type-safety",
+      "version": 1,
+      "acceptanceId": "type_safety_applies_to_sensitive_or_nontrivial_changes",
+      "description": "Sensitive and nontrivial changes execute type checking.",
+      "trigger": {
+        "any": [
+          {"riskIn": ["L2", "L3", "L4"]},
+          {"categoryAny": ["publicApi", "auth", "payment", "shared"]}
+        ]
+      },
+      "dependencies": ["static-lint"],
+      "commands": ["typecheck"],
+      "selectorMode": "none",
+      "formalEligible": true
+    },
+    {
+      "id": "public-api-contract",
+      "version": 1,
+      "acceptanceId": "public_api_contract_and_client_are_synchronized",
+      "description": "Public API changes execute client generation and contract tests.",
+      "trigger": {
+        "any": [
+          {"categoryAny": ["publicApi"]},
+          {"signalAny": ["public-api-change"]}
+        ]
+      },
+      "dependencies": ["type-safety"],
+      "commands": ["generate-client", "test-contract"],
+      "selectorMode": "none",
+      "formalEligible": true
+    },
+    {
+      "id": "stateful-integration",
+      "version": 1,
+      "acceptanceId": "stateful_and_high_risk_changes_execute_integration",
+      "description": "Stateful or high-risk changes execute integration tests.",
+      "trigger": {
+        "any": [
+          {"riskIn": ["L3", "L4"]},
+          {"categoryAny": ["database", "auth", "payment"]},
+          {"signalAny": ["database-migration", "auth-change", "payment-change"]}
+        ]
+      },
+      "dependencies": ["baseline-behavior", "type-safety"],
+      "commands": ["test-integration"],
+      "selectorMode": "none",
+      "formalEligible": true
+    },
+    {
+      "id": "critical-e2e",
+      "version": 1,
+      "acceptanceId": "critical_or_l4_changes_execute_e2e",
+      "description": "Critical-domain and L4 changes execute end-to-end tests.",
+      "trigger": {
+        "any": [
+          {"riskIn": ["L4"]},
+          {"categoryAny": ["auth", "payment"]},
+          {"signalAny": ["auth-change", "payment-change"]}
+        ]
+      },
+      "dependencies": ["stateful-integration"],
+      "commands": ["test-e2e"],
+      "selectorMode": "none",
+      "formalEligible": true
+    },
+    {
+      "id": "build-integrity",
+      "version": 1,
+      "acceptanceId": "build_integrity_applies_to_shared_build_or_high_risk_changes",
+      "description": "Shared, build-system and high-risk changes execute a build.",
+      "trigger": {
+        "any": [
+          {"riskIn": ["L3", "L4"]},
+          {"categoryAny": ["buildSystem", "shared"]},
+          {"signalAny": ["build-system-change", "shared-change"]}
+        ]
+      },
+      "dependencies": ["type-safety"],
+      "commands": ["build"],
+      "selectorMode": "none",
+      "formalEligible": true
+    },
+    {
+      "id": "full-ci-l4",
+      "version": 1,
+      "acceptanceId": "l4_changes_execute_full_ci",
+      "description": "L4 changes execute the complete configured CI equivalent.",
+      "trigger": {"riskIn": ["L4"]},
+      "dependencies": ["critical-e2e", "build-integrity"],
+      "commands": ["full-ci"],
+      "selectorMode": "none",
+      "formalEligible": true
+    },
+    {
+      "id": "required-synchronizations",
+      "version": 1,
+      "acceptanceId": "required_synchronization_checks_are_executed",
+      "description": "Every required synchronization validation check becomes a required result.",
+      "trigger": {"hasRequiredSynchronizations": true},
+      "dependencies": [],
+      "commands": ["$synchronization-checks"],
+      "selectorMode": "none",
+      "formalEligible": true
+    },
+    {
+      "id": "impacted-test-coverage",
+      "version": 1,
+      "acceptanceId": "every_impacted_test_selector_has_an_executable_result",
+      "description": "Every impacted test selector is bound to an executable behavior result or blocks.",
+      "trigger": {"hasImpactedTests": true},
+      "dependencies": ["baseline-behavior"],
+      "commands": ["$behavior-test"],
+      "selectorMode": "bind-behavior-suite",
+      "formalEligible": true
+    },
+    {
+      "id": "unknown-change-conservative",
+      "version": 1,
+      "acceptanceId": "unknown_changed_files_receive_a_conservative_profile",
+      "description": "Unclassified changed files receive a conservative validation profile.",
+      "trigger": {"hasUnknownChangedFiles": true},
+      "dependencies": ["baseline-behavior", "static-lint", "type-safety", "stateful-integration", "build-integrity"],
+      "commands": ["lint", "typecheck", "test-unit", "test-integration", "build"],
+      "selectorMode": "none",
+      "formalEligible": true
+    }
+  ]
+}

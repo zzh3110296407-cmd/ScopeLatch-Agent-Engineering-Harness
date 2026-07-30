@@ -1,12 +1,13 @@
 {
-  "schemaVersion": 1,
-  "generatedAt": "2026-07-23T09:27:19+08:00",
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-30T19:00:00+08:00",
   "measurementType": "repository-capability-and-runtime-artifact-inventory",
   "metricDefinitions": {
     "engineModules": "Tracked .mjs files directly under harness/lib at the referenced commit.",
     "testFiles": "Tracked harness/tests/*.test.mjs files at the referenced commit.",
     "assertionOccurrences": "Static occurrences of supported assert.* calls in tracked Harness test files; this is not a count of independent test cases.",
-    "verifiedControls": "Count of true values in the 17-item capability checklist; controls are not weighted and this is not a quality score."
+    "verifiedControls": "Count of true values in the 17-item legacy capability checklist; controls are not weighted and this is not a quality score.",
+    "v4TrustControls": "Closed V4 trust-boundary controls verified independently from the legacy feature inventory."
   },
   "capabilityKeys": [
     "planningAndContext",
@@ -26,6 +27,18 @@
     "sandbox",
     "explicitWriteTargets",
     "automaticStopCloseout"
+  ],
+  "v4TrustControlKeys": [
+    "closedOutcomes",
+    "contentAddressedEvidence",
+    "gitCandidateBinding",
+    "invariantCatalog",
+    "independentAuditor",
+    "atomicState",
+    "safeExecutor",
+    "shadowQualification",
+    "formalCutover",
+    "v4OnlyRuntime"
   ],
   "stages": [
     {
@@ -166,13 +179,13 @@
       }
     },
     {
-      "id": "v3.4.0",
-      "label": "ScopeLatch 3.4.0",
-      "date": "2026-07-23",
+      "id": "v4.0.0",
+      "label": "ScopeLatch 4.0.0",
+      "date": "2026-07-30",
       "sourceVisibility": "public-repository",
-      "commit": "bb636e7dcfc6a1ba019747bb201297589b4aeb31",
-      "verificationRef": "HEAD",
-      "metrics": { "engineModules": 27, "testFiles": 26, "assertionOccurrences": 452, "verifiedControls": 17 },
+      "commit": null,
+      "verificationRef": "WORKTREE",
+      "metrics": { "engineModules": 35, "testFiles": 37, "assertionOccurrences": 1243, "verifiedControls": 17 },
       "capabilities": {
         "planningAndContext": true,
         "validationGraph": true,
@@ -191,6 +204,18 @@
         "sandbox": true,
         "explicitWriteTargets": true,
         "automaticStopCloseout": true
+      },
+      "v4TrustControls": {
+        "closedOutcomes": true,
+        "contentAddressedEvidence": true,
+        "gitCandidateBinding": true,
+        "invariantCatalog": true,
+        "independentAuditor": true,
+        "atomicState": true,
+        "safeExecutor": true,
+        "shadowQualification": true,
+        "formalCutover": true,
+        "v4OnlyRuntime": true
       }
     }
   ],
@@ -223,10 +248,17 @@
     "caveat": "The archive mixes development tasks, controlled negative-path tests, benchmarks, interrupted runs, and completed work. Status counts are evidence that the control paths executed, not production incident counts or productivity measurements."
   },
   "currentReleaseVerification": {
-    "commit": "bb636e7dcfc6a1ba019747bb201297589b4aeb31",
-    "githubActionsRun": "https://github.com/zzh3110296407-cmd/ScopeLatch-Agent-Engineering-Harness/actions/runs/29971645147",
-    "harnessSuite": { "status": "passed", "testFilesExecuted": 26 },
-    "publicReleaseSecurity": { "status": "passed", "blockers": 0, "warnings": 0 },
-    "dockerSandboxJob": { "status": "passed" }
+    "state": "worktree-pre-release",
+    "commit": null,
+    "githubActionsRun": null,
+    "harnessSuite": { "status": "pending-final-closeout", "testFilesExpected": 37 },
+    "publicReleaseSecurity": { "status": "pending-final-scan" },
+    "dockerSandboxJob": { "status": "not-run-in-this-migration" },
+    "formalQualification": {
+      "h8QualifiedRuns": 0,
+      "h8RequiredRuns": 20,
+      "h8RequiredWindowDays": 7,
+      "h9Status": "BLOCKED"
+    }
   }
 }

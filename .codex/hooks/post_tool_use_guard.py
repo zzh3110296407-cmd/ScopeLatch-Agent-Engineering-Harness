@@ -22,9 +22,6 @@ def main() -> int:
     root = git_root()
     if not root:
         return 0
-    latest = root / ".harness" / "state" / "latest-run.json"
-    if not latest.exists():
-        return 0
     binding, reason = active_harness_binding(root, payload, allow_closed=True)
     if not binding:
         emit({
@@ -36,7 +33,8 @@ def main() -> int:
     result = subprocess.run(
         ["node", "harness/cli.mjs", "post-check", "--run", str(binding["run_dir"])],
         cwd=str(root),
-        text=True,
+        encoding="utf-8",
+        errors="replace",
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         check=False,

@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "policyId": "harness-v4-h9-formal-cutover",
+  "contractVersion": "harness-formal-cutover-v4.1.0",
+  "repository": "zzh3110296407-cmd/ScopeLatch-Agent-Engineering-Harness",
+  "provider": "github-actions",
+  "protectedBranch": "main",
+  "workflow": {
+    "path": ".github/workflows/harness-v4-formal.yml",
+    "requiredCheckName": "Harness v4 Formal Attestation",
+    "requiredEvents": [
+      "merge_group",
+      "pull_request"
+    ],
+    "trustedSource": "protected-base"
+  },
+  "attestation": {
+    "contractVersion": "harness-attestation-v4.1.0",
+    "requiredArtifactType": "FormalAttestation",
+    "requiredMode": "formal-ci",
+    "requiredOutcome": "FORMAL_PASS"
+  },
+  "freshness": {
+    "maxAgeSeconds": 7200,
+    "maxFutureSkewSeconds": 300
+  },
+  "delivery": {
+    "requireExactCommit": true,
+    "requireExactTree": true
+  },
+  "h8": {
+    "policyId": "harness-v4-h8-shadow-qualification",
+    "contractVersion": "harness-shadow-qualification-v4.1.0",
+    "requiredQualificationStatus": "QUALIFIED",
+    "requireEligibleForH9": true
+  },
+  "auditor": {
+    "id": "harness-independent-auditor",
+    "minimumVersion": "4.0.0-h9"
+  },
+  "externalEnforcement": {
+    "required": true,
+    "allowedModes": [
+      "branch-protection",
+      "ruleset"
+    ]
+  }
+}

@@ -5,11 +5,8 @@ const stopWords = new Set([
   'the','and','for','with','from','into','that','this','then','than','when','where','what','how','why','who',
   'implement','create','update','fix','add','remove','change','make','build','refactor','please','need','needs',
   'can','could','should','would','will','shall','done','task','feature','bug','issue','error','test','code',
-  'to','of','in','on','by','as','at','or','is','are','be','return','returns','synchronize','sync',
   '一个','这个','那个','需要','实现','修改','修复','新增','删除','更新','功能','问题','代码','项目','里面','可以','帮我','我们'
 ]);
-
-const fileMentionPattern = /[\w@./\\-]+\.(?:mjs|cjs|js|jsx|ts|tsx|json|md|mdx|yml|yaml|toml|css|scss|html|py|go|rs|java|kt|swift|sql|graphql|gql|proto|rb|php|sh|bash)(?![a-z0-9_])/gi;
 
 const zhTermMap = [
   ['多智能体故事生成系统', ['multiple_agent_for_stories', 'multi_agent', 'story_generator', 'story_workbench']],
@@ -431,7 +428,7 @@ const enTermMap = [
 export function parseTask(task) {
   const raw = String(task || '').trim();
   const fileMentions = extractFileMentions(raw);
-  const tokens = tokenize(raw.replace(fileMentionPattern, ' '));
+  const tokens = tokenize(raw);
   const expanded = unique([...expandChineseTerms(raw), ...expandEnglishTerms(raw)]);
   const allTerms = unique([...tokens, ...expanded, ...fileMentions.map((f) => path.basename(f).split('.')[0].toLowerCase())]);
   return {
@@ -444,8 +441,26 @@ export function parseTask(task) {
 }
 
 export function extractFileMentions(text) {
-  const matches = String(text || '').match(fileMentionPattern) || [];
-  return unique(matches.map((m) => m.replace(/\\/g, '/').replace(/^\.\//, '')));
+  const source = String(text || '');
+  const quotedPattern = /(["'`])([^"'`\r\n]+?\.(?:mjs|cjs|js|jsx|ts|tsx|json|md|mdx|yml|yaml|toml|css|scss|html|py|go|rs|java|kt|swift|sql|graphql|gql|proto|rb|php|sh|bash))\1/gi;
+  const barePattern = /[\w@./\\-]+\.(?:mjs|cjs|js|jsx|ts|tsx|json|md|mdx|yml|yaml|toml|css|scss|html|py|go|rs|java|kt|swift|sql|graphql|gql|proto|rb|php|sh|bash)(?![a-z0-9_])/gi;
+  const repositoryDotfilePattern = /(?:^|[\s"'`])((?:\.\/)?(?:[\w@.-]+[\\/])*\.(?:gitattributes|gitignore|editorconfig|dockerignore|npmrc|nvmrc))(?![\w.-])/gi;
+  const matches = [];
+  for (const match of source.matchAll(quotedPattern)) {
+    matches.push({ index: match.index ?? 0, value: match[2].trim() });
+  }
+  const unquotedSource = source.replace(quotedPattern, (match) => ' '.repeat(match.length));
+  for (const match of unquotedSource.matchAll(barePattern)) {
+    matches.push({ index: match.index ?? 0, value: match[0] });
+  }
+  for (const match of unquotedSource.matchAll(repositoryDotfilePattern)) {
+    const leadingLength = match[0].length - match[1].length;
+    matches.push({ index: (match.index ?? 0) + leadingLength, value: match[1] });
+  }
+  matches.sort((left, right) => left.index - right.index);
+  return unique(
+    matches.map(({ value }) => value.replace(/\\/g, '/').replace(/^\.\//, ''))
+  );
 }
 
 function tokenize(text) {

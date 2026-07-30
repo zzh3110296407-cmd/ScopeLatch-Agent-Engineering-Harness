@@ -7,19 +7,16 @@ const base = {
     id: 'test-integration',
     commandId: 'testIntegration',
     exitCode: 1,
-    stderr: `${['C:', 'Users', 'ExampleUser', 'repo', 'api.py'].join('\\')}:42 timeout after 913ms at 2026-07-22T10:20:30.100Z`,
+    stderr: 'C:\\Users\\Alice\\repo\\api.py:42 timeout after 913ms at 2026-07-22T10:20:30.100Z',
     stdout: ''
   }],
-  files: ['src/backend/api/orders.py'],
+  files: ['Project Codes/Phase 8.5/Codes/app/backend/api/story.py'],
   domains: ['public-api']
 };
 
 const sameRootCause = {
   ...base,
-  failedChecks: [{
-    ...base.failedChecks[0],
-    stderr: `${['D:', 'workspace', 'repo', 'api.py'].join('\\')}:98 timeout after 1220ms at 2027-01-01T00:00:00.000Z`
-  }]
+  failedChecks: [{ ...base.failedChecks[0], stderr: 'D:\\work\\repo\\api.py:98 timeout after 1220ms at 2027-01-01T00:00:00.000Z' }]
 };
 const differentRootCause = {
   ...base,
@@ -32,8 +29,8 @@ const third = buildDetailedFailureSignature(differentRootCause);
 assert.equal(first.signature, second.signature);
 assert.notEqual(first.signature, third.signature);
 assert.deepEqual(first.features.domains, ['public-api']);
-assert.equal(first.features.fileClusters.includes('src/backend/api'), true);
-assert.equal(first.features.errorSummaries[0].includes('ExampleUser'), false);
+assert.equal(first.features.fileClusters.includes('project-codes/backend/api'), true);
+assert.equal(first.features.errorSummaries[0].includes('Alice'), false);
 assert.deepEqual(assessEvidenceQuality(first.features), {
   level: 'high',
   promotable: true,
@@ -57,7 +54,7 @@ const unattributedSideEffect = assessEvidenceQuality({
   checks: [],
   findingIds: ['validation-side-effect'],
   domains: ['harness-control'],
-  fileClusters: ['src/backend/scripts'],
+  fileClusters: ['project-codes/backend/scripts'],
   errorSummaries: []
 });
 assert.equal(unattributedSideEffect.level, 'low');

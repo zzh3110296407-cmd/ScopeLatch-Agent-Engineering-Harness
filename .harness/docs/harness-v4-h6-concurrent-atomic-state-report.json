@@ -1,0 +1,273 @@
+{
+  "schemaVersion": 1,
+  "milestone": "H6",
+  "contractVersion": "harness-trust-v4.0.0",
+  "generatedAt": "2026-07-30T09:00:00+08:00",
+  "predecessor": {
+    "milestone": "H5",
+    "reportPath": ".harness/docs/harness-v4-h5-independent-auditor-report.json",
+    "reportDigest": "sha256:8cac48081a84ff0fa0662c2c68adfa21c2f3ef0beb0d57db9c3c0c4cb3c1024b",
+    "regressionStatus": "PASS"
+  },
+  "scope": {
+    "networkUsed": false,
+    "externalServicesCalled": false,
+    "applicationFilesChanged": false,
+    "phase9FilesChanged": false,
+    "immutableCandidateMode": "git-tree-object",
+    "safeExecutorImplemented": false,
+    "safeExecutorReason": "Candidate materialization and bounded command execution remain H7 responsibilities."
+  },
+  "observations": [
+    {
+      "invariantResultId": "sha256:b970fa4d2830053228a7960167da3b14e833305c0d0a62b15a6c34b9fb1242a9",
+      "scenarioId": "collision-resistant-run-id",
+      "boundary": "run-identity",
+      "outcome": "PASS",
+      "evidence": "Five thousand IDs generated at the same timestamp remain unique and each carries 128 bits of random entropy."
+    },
+    {
+      "invariantResultId": "sha256:d2baaa895b81f8381ef5ad9c947590a034fdf869f88a2aac9884f54b297cdb59",
+      "scenarioId": "isolated-run-directories",
+      "boundary": "parallel-cli",
+      "outcome": "PASS",
+      "evidence": "Concurrent CLI plans receive distinct run, evidence, output, ownership and immutable candidate workspace identities."
+    },
+    {
+      "invariantResultId": "sha256:495f0046efff3b5c1451e0129612343e1315a099aacd4e7a753a4e8f0fb59127",
+      "scenarioId": "exclusive-lease",
+      "boundary": "lease-acquisition",
+      "outcome": "PASS",
+      "evidence": "Atomic exclusive creation rejects a second owner while an unexpired resource lease is active."
+    },
+    {
+      "invariantResultId": "sha256:6aa6579bc6a422cdfada8fb0dd61feedfd5b56b023a5be5c8ab25edd2d259705",
+      "scenarioId": "heartbeat-ownership",
+      "boundary": "lease-lifecycle",
+      "outcome": "PASS",
+      "evidence": "Owner and nonce are both required for heartbeat and release; TTL, revision and heartbeat advance atomically."
+    },
+    {
+      "invariantResultId": "sha256:63d4427168d276406769b54c57d9eda0e2a02fd953a26baebbe0eae3b3e58f05",
+      "scenarioId": "cas-stress",
+      "boundary": "cross-process-state",
+      "outcome": "PASS",
+      "evidence": "Six normal processes perform 300 increments and eight slow-filesystem processes perform another 120 increments with exact final revisions and counters. Atomic mutations read and write inside one fair critical section, while explicit stale CAS writers remain rejected."
+    },
+    {
+      "invariantResultId": "sha256:b6c40ffe8a619e5f68db1ef6edd5aa0b3b4d66289bac679841aa9b8c02ea5d03",
+      "scenarioId": "explicit-recovery",
+      "boundary": "crash-recovery",
+      "outcome": "PASS",
+      "evidence": "Resume reacquires ownership without synthesizing completion; abort is terminal and cannot override another active owner."
+    },
+    {
+      "invariantResultId": "sha256:39849d37562e4a80be85a817acce878f22767710b27f4fae968d1288c2208a41",
+      "scenarioId": "latest-nonauthority",
+      "boundary": "status-and-hooks",
+      "outcome": "PASS",
+      "evidence": "latest-run.json is navigation-only; authoritative status requires an explicit run ID and no Hook reads the latest pointer."
+    },
+    {
+      "invariantResultId": "sha256:c5eb984f18249791f1cc2e92805313ff70b12dd065afe1bce581b59b23c036e0",
+      "scenarioId": "git-observation-lock",
+      "boundary": "windows-git-index",
+      "outcome": "PASS",
+      "evidence": "Only candidate snapshot observation is serialized, preventing Windows Git index handle races while run state and outputs remain parallel."
+    },
+    {
+      "invariantResultId": "sha256:0f22e7d11915c72a57d5e26fd1a66db23d8592ce3ccd90630586b8462fac9bbf",
+      "scenarioId": "hook-authority",
+      "boundary": "codex-hooks",
+      "outcome": "PASS",
+      "evidence": "Hooks require explicit or unique digest-valid authoritative state and verify session owner, nonce, lease TTL, workspace, branch and commit. Git and child-process output is decoded explicitly as UTF-8, including repositories below Windows paths containing non-ASCII characters."
+    },
+    {
+      "invariantResultId": "sha256:fec20c133464741b1b9d418a635d22af321b7832e1bb4b6c10bc98f955900ac4",
+      "scenarioId": "predecessor-regression",
+      "boundary": "milestone-chain",
+      "outcome": "PASS",
+      "evidence": "The H5 predecessor report is content-digest bound and reports PASS."
+    },
+    {
+      "invariantResultId": "sha256:34f2cc8e0e664c1dae26ce8bc33c57112af76ad8f2c8180d9674f9176135ca10",
+      "scenarioId": "isolated-suite",
+      "boundary": "fresh-local-repository",
+      "outcome": "PASS",
+      "evidence": "The complete 34-test Harness suite, including H0 through H8, Unicode-path Hooks and Python Hook compilation, passes from a D-drive isolated Windows root without network access."
+    }
+  ],
+  "acceptanceEvidence": [
+    {
+      "acceptanceId": "parallel_runs_do_not_share_evidence_ownership_or_output_directories",
+      "invariantResultIds": [
+        "sha256:b970fa4d2830053228a7960167da3b14e833305c0d0a62b15a6c34b9fb1242a9",
+        "sha256:d2baaa895b81f8381ef5ad9c947590a034fdf869f88a2aac9884f54b297cdb59"
+      ],
+      "outcome": "PASS"
+    },
+    {
+      "acceptanceId": "lease_acquisition_is_exclusive_and_owner_bound",
+      "invariantResultIds": [
+        "sha256:495f0046efff3b5c1451e0129612343e1315a099aacd4e7a753a4e8f0fb59127",
+        "sha256:6aa6579bc6a422cdfada8fb0dd61feedfd5b56b023a5be5c8ab25edd2d259705"
+      ],
+      "outcome": "PASS"
+    },
+    {
+      "acceptanceId": "concurrent_state_updates_have_no_lost_writes",
+      "invariantResultIds": [
+        "sha256:63d4427168d276406769b54c57d9eda0e2a02fd953a26baebbe0eae3b3e58f05"
+      ],
+      "outcome": "PASS"
+    },
+    {
+      "acceptanceId": "slow_windows_filesystem_contention_is_fair_and_bounded",
+      "invariantResultIds": [
+        "sha256:63d4427168d276406769b54c57d9eda0e2a02fd953a26baebbe0eae3b3e58f05"
+      ],
+      "outcome": "PASS"
+    },
+    {
+      "acceptanceId": "latest_run_grants_no_identity_lease_or_authority",
+      "invariantResultIds": [
+        "sha256:39849d37562e4a80be85a817acce878f22767710b27f4fae968d1288c2208a41",
+        "sha256:0f22e7d11915c72a57d5e26fd1a66db23d8592ce3ccd90630586b8462fac9bbf"
+      ],
+      "outcome": "PASS"
+    },
+    {
+      "acceptanceId": "hooks_support_windows_unicode_repository_paths",
+      "invariantResultIds": [
+        "sha256:0f22e7d11915c72a57d5e26fd1a66db23d8592ce3ccd90630586b8462fac9bbf"
+      ],
+      "outcome": "PASS"
+    },
+    {
+      "acceptanceId": "crash_recovery_is_explicit_and_cannot_synthesize_completion",
+      "invariantResultIds": [
+        "sha256:b6c40ffe8a619e5f68db1ef6edd5aa0b3b4d66289bac679841aa9b8c02ea5d03"
+      ],
+      "outcome": "PASS"
+    },
+    {
+      "acceptanceId": "shared_git_candidate_observation_is_race_safe",
+      "invariantResultIds": [
+        "sha256:c5eb984f18249791f1cc2e92805313ff70b12dd065afe1bce581b59b23c036e0"
+      ],
+      "outcome": "PASS"
+    },
+    {
+      "acceptanceId": "predecessor_milestones_remain_regressed",
+      "invariantResultIds": [
+        "sha256:fec20c133464741b1b9d418a635d22af321b7832e1bb4b6c10bc98f955900ac4"
+      ],
+      "outcome": "PASS"
+    },
+    {
+      "acceptanceId": "isolated_full_suite_passes",
+      "invariantResultIds": [
+        "sha256:34f2cc8e0e664c1dae26ce8bc33c57112af76ad8f2c8180d9674f9176135ca10"
+      ],
+      "outcome": "PASS"
+    }
+  ],
+  "isolatedAcceptance": {
+    "status": "PASS",
+    "networkUsed": false,
+    "externalServicesCalled": false,
+    "temporaryRootsUsed": true,
+    "sharedRuntimeDataUsed": false,
+    "repositoryInitializedLocally": true,
+    "testCount": 34,
+    "attempts": [
+      {
+        "attempt": 1,
+        "status": "FAIL",
+        "reason": "Windows reported EPERM rather than EEXIST for a contended exclusive lock; the atomic lock adapter was corrected."
+      },
+      {
+        "attempt": 2,
+        "status": "FAIL",
+        "reason": "A just-closed Windows lock handle could leave the lock path temporarily occupied; ownership-checked atomic release and retry were added."
+      },
+      {
+        "attempt": 3,
+        "status": "FAIL",
+        "reason": "Concurrent git write-tree observations competed for the shared Windows index; candidate snapshot capture was placed in a short repository-scoped atomic critical section."
+      },
+      {
+        "attempt": 4,
+        "status": "PASS",
+        "reason": "A fresh local Git repository executed the complete 32-test suite with no shared application runtime data."
+      },
+      {
+        "attempt": 5,
+        "status": "FAIL",
+        "reason": "GitHub Actions observation 30469883377 reproduced HARNESS_V4_STATE_LOCK_TIMEOUT in the H6 parallel state test while Baseline and cold/cached reproduction otherwise stabilized."
+      },
+      {
+        "attempt": 6,
+        "status": "FAIL",
+        "reason": "A D-drive isolated slow-Windows-fsync regression deterministically reproduced the same timeout in six of eight contending worker processes."
+      },
+      {
+        "attempt": 7,
+        "status": "PASS",
+        "reason": "FIFO waiter tickets prevent reacquisition starvation, monotonic timeout measurement avoids wall-clock drift, and atomic mutations no longer create a CAS retry thundering herd."
+      },
+      {
+        "attempt": 8,
+        "status": "FAIL",
+        "reason": "The full suite exposed locale-dependent Python subprocess decoding when Git returned a repository path containing non-ASCII D-drive segments."
+      },
+      {
+        "attempt": 9,
+        "status": "PASS",
+        "reason": "All three Hooks now decode child output explicitly as UTF-8; the explicit Chinese-path regression and complete 34-test suite pass without environment overrides."
+      },
+      {
+        "attempt": 10,
+        "status": "FAIL",
+        "reason": "GitHub Actions observation 30489265727 passed H6 during the cold shadow but timed out in the cached shadow because the ten-second production lock wait budget did not cover the declared eight-worker slow-fsync profile on the hosted Windows filesystem."
+      },
+      {
+        "attempt": 11,
+        "status": "PASS",
+        "reason": "The production atomic lock wait budget is sixty seconds and the H6 test binds that policy while retaining FIFO tickets, monotonic timing, stale-lock recovery and the existing eight-worker slow-fsync stress profile."
+      }
+    ],
+    "commands": [
+      {
+        "command": "node harness/tests/v4-h6-concurrent-atomic-state.test.mjs",
+        "expectedMarker": "HARNESS_V4_H6_CONCURRENT_ATOMIC_STATE: PASS",
+        "observed": "PASS"
+      },
+      {
+        "command": "node harness/tests/hooks-policy.test.mjs",
+        "expectedMarker": "HOOKS_POLICY_TEST_PASS",
+        "observed": "PASS"
+      },
+      {
+        "command": "node harness/tests/run-all.mjs",
+        "expectedMarker": "HARNESS_TEST_SUITE_PASS (34 tests)",
+        "observed": "PASS"
+      }
+    ]
+  },
+  "sourceHashes": {
+    ".codex/hooks/post_tool_use_guard.py": "sha256:b1ab0f5effa326570751a5388e0ee0ac263f13645e3ff85e43741d21342413fa",
+    ".codex/hooks/pre_tool_use_policy.py": "sha256:196b1e14b93e418853272e0049b509d5fbfb1f294ceecc852a92470c11ccfa11",
+    ".codex/hooks/stop_guard.py": "sha256:0176537023625fda5f5c3789c3dbcbf84f8c1ed3a56b42ec5dcb61068d16203d",
+    "harness/cli.mjs": "sha256:224e67a2195084a2929c2ea45303e5ee9db28bfcfde1f6d1ab1ffff087ba1ea0",
+    "harness/lib/closeout.mjs": "sha256:dacde0c595eef6d5ab335027fe33698272fc5c39c39eed7f73e70765a0ab680a",
+    "harness/lib/manifest.mjs": "sha256:1b765fb0b58555edd13701123d6d6d586a79813ddb6139293ad37e23982064a1",
+    "harness/lib/session-binding.mjs": "sha256:618e3051d6f983102c8f94773c9c43ea7c3ce11b692065ad7a518c1d25b83409",
+    "harness/lib/v4/concurrent-state.mjs": "sha256:f76213e4a94f488a2d58ecbc796301b2703f7447858faccde0eb15bd779b9a0a",
+    "harness/tests/hooks-policy.test.mjs": "sha256:cbebe6a1cb9983247a1880db089d3eafdc88a77e324e1da7df4eb2be25ffd56b",
+    "harness/tests/v4-h6-concurrent-atomic-state.test.mjs": "sha256:a7915ea3850adf5e88e1500847896b8fb0aab95371c4ec876d51022467d0bf98"
+  },
+  "hardFailures": [],
+  "nextMilestoneEligible": true,
+  "finalMarker": "HARNESS_V4_H6_CONCURRENT_ATOMIC_STATE: PASS"
+}

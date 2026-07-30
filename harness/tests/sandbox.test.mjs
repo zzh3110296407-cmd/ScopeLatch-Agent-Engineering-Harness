@@ -3,10 +3,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { buildSandboxInvocation, sandboxVerificationCommands } from '../lib/sandbox.mjs';
 
-const root = path.resolve('test-fixtures/sample-project');
+const root = path.resolve('C:/workspace/story-project');
 const invocation = buildSandboxInvocation({
   root,
-  image: 'scopelatch-harness-sandbox:3.2.0',
+  image: 'scopelatch-harness-sandbox:4.0.0',
   command: ['node', 'harness/cli.mjs', 'status']
 });
 
@@ -22,7 +22,7 @@ assert.equal(invocation.shell, false);
 
 const writableInvocation = buildSandboxInvocation({
   root,
-  image: 'scopelatch-harness-sandbox:3.4.0',
+  image: 'scopelatch-harness-sandbox:4.0.0',
   workspaceWritable: true,
   command: ['node', 'harness/cli.mjs', 'status']
 });

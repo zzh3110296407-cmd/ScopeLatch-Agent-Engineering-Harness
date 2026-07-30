@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "milestone": "H1",
+  "contractVersion": "harness-trust-v4.0.0",
+  "generatedAt": "2026-07-29T01:08:00+08:00",
+  "predecessor": {
+    "milestone": "H0",
+    "reportPath": ".harness/docs/harness-v4-h0-baseline-report.json",
+    "reportDigest": "sha256:d958860c0165817edc3ef8d15445429b58b8230e1196f7154097ef131431392e",
+    "regressionStatus": "PASS"
+  },
+  "scope": {
+    "networkUsed": false,
+    "externalServicesCalled": false,
+    "businessCodeChanged": false,
+    "formalAttestationImplemented": false,
+    "formalAttestationReason": "Independent attestation is an H5 responsibility. H1 development successes are explicitly provisional."
+  },
+  "requiredTargetCaseIds": [
+    "empty-plan-blocked",
+    "missing-required-graph-node-blocked",
+    "optional-failure-not-formal-pass",
+    "required-sync-checks-compiled",
+    "required-unavailable-blocked"
+  ],
+  "observedPassingTargetCaseIds": [
+    "empty-plan-blocked",
+    "missing-required-graph-node-blocked",
+    "optional-failure-not-formal-pass",
+    "required-sync-checks-compiled",
+    "required-unavailable-blocked"
+  ],
+  "additionalTargetCasePassingEarly": [
+    "plan-digest-tamper-detected"
+  ],
+  "remainingFutureTargetFailures": [
+    "candidate-commit-binding-enforced",
+    "git-status-error-blocked",
+    "staged-index-content-bound"
+  ],
+  "remainingFutureTargetFailureOwnership": {
+    "candidate-commit-binding-enforced": "H3",
+    "git-status-error-blocked": "H3",
+    "staged-index-content-bound": "H3"
+  },
+  "acceptance": {
+    "all_applicable_required_checks_have_exactly_one_plan_node_and_result": true,
+    "blocked_error_canceled_and_missing_required_evidence_cannot_pass": true,
+    "cli_and_closeout_return_nonzero_terminal_status_for_blocked_validation": true,
+    "development_success_is_explicitly_provisional_and_not_formal_eligible": true,
+    "executed_optional_assertion_failure_cannot_pass": true,
+    "l1_plans_have_at_least_one_required_behavior_check": true,
+    "repair_cannot_relabel_blocked_validation_as_not_needed": true,
+    "required_synchronization_checks_are_compiled_as_required_nodes": true,
+    "zero_applicable_required_checks_are_blocked": true
+  },
+  "isolatedAcceptance": {
+    "status": "PASS",
+    "networkUsed": false,
+    "externalServicesCalled": false,
+    "temporaryRootsUsed": true,
+    "sharedRuntimeDataUsed": false,
+    "attempts": [
+      {
+        "attempt": 1,
+        "status": "FAILED",
+        "reason": "The first temporary fixture omitted the tracked source-authority manifest and its readiness markers; config-health correctly rejected the incomplete isolated environment."
+      },
+      {
+        "attempt": 2,
+        "status": "PASS",
+        "reason": "A fresh temporary root included Harness, hooks, H0/H1 documents, the tracked authority manifest, and only its declared readiness files; all 27 tests passed."
+      }
+    ],
+    "commands": [
+      {
+        "command": "node harness/tests/v4-h1-fail-closed.test.mjs",
+        "expectedMarker": "HARNESS_V4_H1_FAIL_CLOSED: PASS",
+        "observed": "PASS"
+      },
+      {
+        "command": "node harness/tests/validation-graph.test.mjs",
+        "expectedMarker": "VALIDATION_GRAPH_TEST_PASS",
+        "observed": "PASS"
+      },
+      {
+        "command": "node harness/tests/repair-loop.test.mjs",
+        "expectedMarker": "REPAIR_LOOP_TEST_PASS",
+        "observed": "PASS"
+      },
+      {
+        "command": "node harness/tests/codex-process-e2e.test.mjs",
+        "expectedMarker": "CODEX_PROCESS_E2E_TEST_PASS",
+        "observed": "PASS"
+      },
+      {
+        "command": "node harness/tests/run-command.test.mjs",
+        "expectedMarker": "RUN_COMMAND_TEST_PASS",
+        "observed": "PASS"
+      },
+      {
+        "command": "node harness/tests/run-all.mjs",
+        "expectedMarker": "HARNESS_TEST_SUITE_PASS (27 tests)",
+        "observed": "PASS"
+      },
+      {
+        "command": "node harness/tests/v4-trust-contract.red.mjs",
+        "expected": "H1 cases PASS; only catalogued H3 cases remain FAIL",
+        "observed": "PASS"
+      }
+    ]
+  },
+  "sourceHashes": {
+    "harness/cli.mjs": "sha256:224e67a2195084a2929c2ea45303e5ee9db28bfcfde1f6d1ab1ffff087ba1ea0",
+    "harness/lib/closeout.mjs": "sha256:dacde0c595eef6d5ab335027fe33698272fc5c39c39eed7f73e70765a0ab680a",
+    "harness/lib/repair.mjs": "sha256:66072f9afac33d490be886fea2d3ab2764d0119642dec96739f41be5dcedc5ed",
+    "harness/lib/report.mjs": "sha256:8f10ec95132bbf4d854ee73987ba36e8015271c37c11c88f0f9ba78cbf559df9",
+    "harness/lib/v4/outcome-engine.mjs": "sha256:1046a0680ca99c776715632887274397525472c80411f162e944a0a192d028cd",
+    "harness/lib/validation-planner.mjs": "sha256:61b7cf9b3ec25ef47c9801b8ecd00875e29747d063ea4ef4473fedb8040ef737",
+    "harness/lib/validator.mjs": "sha256:24aac8668a9066b2b4e513754a6a0b8e3c7039d7fb18ca1db1acf2a07bd5d4ab",
+    "harness/tests/codex-process-e2e.test.mjs": "sha256:73b3f570d03d519b4fb4b452c53eb254836e5ef0be6398fd8f1e1f983158b050",
+    "harness/tests/repair-loop.test.mjs": "sha256:c05792dc616791f44fe0c505be43030e4008a05ef34523ae3bf1044d7daccadc",
+    "harness/tests/v4-h1-fail-closed.test.mjs": "sha256:73d1bff533fd2c0725dc9490a2a53b189dd8d3136265d5d9df03a61d705f5217",
+    "harness/tests/validation-graph.test.mjs": "sha256:ceed639d259600438bbaee75b2f3d351033d6765506301c03c3ebc6d13fd1b7a"
+  },
+  "hardFailures": [],
+  "nextMilestoneEligible": true,
+  "finalMarker": "HARNESS_V4_H1_FAIL_CLOSED: PASS"
+}

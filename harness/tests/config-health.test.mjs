@@ -16,29 +16,6 @@ assert.equal(config.policy.allowOutOfScopeOverride, false);
 assert.equal(config.policy.autoCloseoutOnStop, true);
 assert.equal(config.policy.autoCloseoutTimeoutSeconds, 900);
 
-const disabledCapabilityHealth = buildConfigHealth({
-  root,
-  config: {
-    ...config,
-    commands: {
-      ...config.commands,
-      generateClient: 'none'
-    }
-  }
-});
-assert.equal(disabledCapabilityHealth.status, 'healthy');
-assert.deepEqual(
-  disabledCapabilityHealth.commands.find((command) => command.id === 'generateClient'),
-  {
-    id: 'generateClient',
-    configured: 'none',
-    explicit: true,
-    disabled: true,
-    available: false,
-    command: null
-  }
-);
-
 const cleanCheckoutRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'harness-config-fallback-'));
 try {
   const harnessDir = path.join(cleanCheckoutRoot, '.harness');

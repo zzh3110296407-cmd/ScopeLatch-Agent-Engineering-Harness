@@ -10,14 +10,25 @@ import { ensureDir, normalizePath, readJson, writeJson, writeText } from './comm
 export function repairRun({ root, runDir, config, options = {} }) {
   const validationResult = readJson(path.join(runDir, 'validation-result.json'), null);
   if (!validationResult) throw new Error(`Cannot read validation result: ${path.join(runDir, 'validation-result.json')}`);
-  if (validationResult.status !== 'failed') {
+  if (validationResult.outcome === 'PASS') {
     return finishRepair({
       root,
       runDir,
       state: readRepairState(runDir),
       result: {
         status: 'not-needed',
-        reason: `Validation status is ${validationResult.status}.`
+        reason: `Validation outcome is ${validationResult.outcome}.`
+      }
+    });
+  }
+  if (validationResult.outcome !== 'FAIL') {
+    return finishRepair({
+      root,
+      runDir,
+      state: readRepairState(runDir),
+      result: {
+        status: 'blocked',
+        reason: `validation-${String(validationResult.outcome || 'missing').toLowerCase()}-is-not-repairable`
       }
     });
   }
@@ -198,7 +209,7 @@ export function repairRun({ root, runDir, config, options = {} }) {
     options: options.guardOptions || {},
     resultFileName: 'post-validation-guard-result.json',
     artifactKey: 'postValidationGuardResult',
-    passedStatus: validationRun.result.status === 'failed' ? 'guarded' : 'passed',
+    passedStatus: validationRun.result.outcome === 'PASS' ? 'passed' : 'guarded',
     passedPhase: 'repair-closeout-complete'
   });
   const validationSideEffects = diffWorkingTreeSnapshots(beforeValidation, readGuardedWorkingTreeSnapshot(root));
@@ -232,8 +243,8 @@ export function repairRun({ root, runDir, config, options = {} }) {
       artifacts: { repairPrompt: promptPath, repairCodexResult: codexResultPath }
     });
   }
-  repairRound.validationStatus = validationRun.result.status;
-  if (validationRun.result.status === 'failed') {
+  repairRound.validationOutcome = validationRun.result.outcome;
+  if (validationRun.result.outcome === 'FAIL') {
     const outputSignature = failureSignature(validationRun.result);
     repairRound.outputSignature = outputSignature;
     repairRound.completedAt = new Date().toISOString();
@@ -288,7 +299,7 @@ export function repairRun({ root, runDir, config, options = {} }) {
 
 export function failureSignature(validationResult) {
   const failed = (validationResult?.results || [])
-    .filter((result) => result.status === 'failed')
+    .filter((result) => result.outcome === 'FAIL')
     .map((result) => ({
       id: result.id,
       commandId: result.commandId || null,
@@ -297,7 +308,7 @@ export function failureSignature(validationResult) {
       stdout: signatureText(result.stdout),
       stderr: signatureText(result.stderr)
     }));
-  const payload = failed.length ? failed : [{ status: validationResult?.status || 'unknown' }];
+  const payload = failed.length ? failed : [{ outcome: validationResult?.outcome || 'UNKNOWN' }];
   return `sha256:${crypto.createHash('sha256').update(JSON.stringify(payload)).digest('hex')}`;
 }
 
@@ -312,8 +323,9 @@ function buildRepairPrompt({
   validationPlan
 }) {
   const rel = (file) => normalizePath(path.relative(root, file));
-  const failed = (validationResult.results || []).filter((result) => result.status === 'failed');
-  const skipped = (validationResult.results || []).filter((result) => result.status === 'skipped');
+  const failed = (validationResult.results || []).filter((result) => result.outcome === 'FAIL');
+  const skipped = (validationResult.results || [])
+    .filter((result) => ['BLOCKED', 'NOT_APPLICABLE'].includes(result.outcome));
   const lines = [];
 
   lines.push('# Harness Repair Prompt');
