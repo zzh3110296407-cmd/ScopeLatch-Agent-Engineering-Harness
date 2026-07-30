@@ -2,11 +2,12 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { changesSinceSnapshot, evaluateDiffGuard } from '../lib/guard.mjs';
+import { spawnSync } from 'node:child_process';
+import { changesSinceSnapshot, evaluateDiffGuard, readWorkingTreeChanges } from '../lib/guard.mjs';
 
 const config = {
   changeBudget: {
-    forbiddenDirs: ['secrets', '**/app/data']
+    forbiddenDirs: ['secrets', 'Project Codes/**/app/data']
   },
   riskRules: {
     buildSystemPatterns: ['package.json', 'package-lock.json', '.github/workflows/**']
@@ -52,7 +53,7 @@ const failed = evaluateDiffGuard({
   changes: [
     { path: 'src/api/story.js', kind: 'modified' },
     { path: 'tests/story.test.js', kind: 'deleted' },
-    { path: 'versions/Phase 8.5/Codes/app/data/local-project.json', kind: 'modified' },
+    { path: 'Project Codes/Phase 8.5/Codes/app/data/local_project.json', kind: 'modified' },
     { path: 'package-lock.json', kind: 'modified' },
     { path: '.github/workflows/ci.yml', kind: 'modified' },
     { path: 'src/generated/client.generated.js', kind: 'modified' },
@@ -94,7 +95,7 @@ const approved = evaluateDiffGuard({
       'src/api/story.js',
       'src/api/story-consumer.js',
       'tests/story.test.js',
-      'versions/Phase 8.5/Codes/app/frontend/src/api/ordersApi.js',
+      'Project Codes/Phase 8.5/Codes/app/frontend/src/api/storyApi.js',
       'package-lock.json',
       'harness/lib/guard.mjs'
     ],
@@ -115,7 +116,7 @@ const approved = evaluateDiffGuard({
     { path: 'src/api/story.js', kind: 'modified' },
     { path: 'src/api/story-consumer.js', kind: 'modified' },
     { path: 'tests/story.test.js', kind: 'deleted' },
-    { path: 'versions/Phase 8.5/Codes/app/frontend/src/api/ordersApi.js', kind: 'modified' },
+    { path: 'Project Codes/Phase 8.5/Codes/app/frontend/src/api/storyApi.js', kind: 'modified' },
     { path: 'package-lock.json', kind: 'modified' },
     { path: 'harness/lib/guard.mjs', kind: 'modified' }
   ]
@@ -159,7 +160,7 @@ const readContextIsNotWriteAuthority = evaluateDiffGuard({
     { path: 'src/read-only-context.js', kind: 'modified' },
     { path: 'src/read-only-dependent.js', kind: 'modified' },
     { path: 'tests/read-only-related.test.js', kind: 'modified' },
-    { path: 'versions/Phase 8.5/Codes/app/frontend/src/App.jsx', kind: 'modified' },
+    { path: 'Project Codes/Phase 8.5/Codes/app/frontend/src/App.jsx', kind: 'modified' },
     { path: 'harness/lib/guard.mjs', kind: 'modified' }
   ]
 });
@@ -170,7 +171,7 @@ assert.deepEqual(
     'src/read-only-context.js',
     'src/read-only-dependent.js',
     'tests/read-only-related.test.js',
-    'versions/Phase 8.5/Codes/app/frontend/src/App.jsx',
+    'Project Codes/Phase 8.5/Codes/app/frontend/src/App.jsx',
     'harness/lib/guard.mjs'
   ]
 );
@@ -203,8 +204,7 @@ assert.deepEqual(baselineDelta.map((change) => change.path), ['already-dirty.txt
 const securityRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'harness-guard-security-'));
 const fakeSecret = ['sk', 'abcdefghijklmnopqrstuvwxyz123456'].join('-');
 fs.writeFileSync(path.join(securityRoot, 'secret.js'), `const apiKey = "${fakeSecret}";\n`, 'utf8');
-const localExamplePath = ['C:', 'Users', 'ExampleUser', 'private', 'project'].join('\\');
-fs.writeFileSync(path.join(securityRoot, 'guide.md'), `Use ${localExamplePath} locally.\n`, 'utf8');
+fs.writeFileSync(path.join(securityRoot, 'guide.md'), 'Use C:\\Users\\Someone\\private\\project locally.\n', 'utf8');
 const securityImpact = {
   risk: { level: 'L1', score: 1 },
   riskSignals: [],
@@ -241,4 +241,23 @@ assert.ok(securityResult.findings.some((finding) => finding.id === 'release-lice
 assert.equal(JSON.stringify(securityResult).includes('abcdefghijklmnopqrstuvwxyz123456'), false);
 fs.rmSync(securityRoot, { recursive: true, force: true });
 
+const notGitRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'harness-guard-not-git-'));
+assert.throws(() => readWorkingTreeChanges(notGitRoot), /GIT_REPOSITORY_UNAVAILABLE/);
+fs.rmSync(notGitRoot, { recursive: true, force: true });
+
+const unicodeRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'harness-guard-unicode-'));
+const unicodeName = '剧情 → candidate.txt';
+git(unicodeRoot, ['init']);
+fs.writeFileSync(path.join(unicodeRoot, unicodeName), 'content\n', 'utf8');
+const unicodeChanges = readWorkingTreeChanges(unicodeRoot);
+assert.equal(unicodeChanges.length, 1);
+assert.equal(unicodeChanges[0].path, unicodeName);
+assert.equal(unicodeChanges[0].kind, 'untracked');
+fs.rmSync(unicodeRoot, { recursive: true, force: true });
+
 console.log('GUARD_TEST_PASS');
+
+function git(root, args) {
+  const result = spawnSync('git', args, { cwd: root, encoding: 'utf8' });
+  assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+}

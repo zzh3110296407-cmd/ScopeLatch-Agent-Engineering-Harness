@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 1,
+  "milestone": "H3",
+  "contractVersion": "harness-trust-v4.0.0",
+  "generatedAt": "2026-07-29T14:45:33+08:00",
+  "predecessor": {
+    "milestone": "H2",
+    "reportPath": ".harness/docs/harness-v4-h2-evidence-chain-report.json",
+    "reportDigest": "sha256:a7f16e8f22225d4e7d74ef6b318fdbe8a6c9e37f0eb457fbb938c7b0ccb746eb",
+    "regressionStatus": "PASS"
+  },
+  "scope": {
+    "networkUsed": false,
+    "externalServicesCalled": false,
+    "applicationFilesChanged": false,
+    "phase9FilesChanged": false,
+    "formalAttestationImplemented": false,
+    "formalAttestationReason": "H3 binds Git identity and detects drift. Independent read-only formal attestation remains an H5 responsibility."
+  },
+  "acceptance": {
+    "git_observation_failure_is_fail_closed": true,
+    "porcelain_status_uses_nul_delimited_path_safe_parsing": true,
+    "unicode_and_arrow_like_paths_are_observed_without_quote_heuristics": true,
+    "index_object_identity_and_worktree_content_are_bound_separately": true,
+    "same_worktree_bytes_with_changed_staged_blob_are_detected": true,
+    "manifest_schema_6_requires_a_git_candidate_baseline": true,
+    "sealed_evidence_binding_includes_the_git_candidate_baseline_digest": true,
+    "candidate_baseline_digest_is_self_verifying": true,
+    "head_commit_tree_branch_mode_and_branch_name_are_bound": true,
+    "head_or_branch_drift_invalidates_before_validation_commands_execute": true,
+    "validation_results_bind_to_the_observed_candidate_snapshot": true,
+    "mutable_worktree_success_remains_provisional_and_not_formal_eligible": true,
+    "legacy_unbound_manifests_remain_readable_but_are_not_formal_evidence": true,
+    "h0_h1_h2_predecessor_chain_is_complete_and_regressed": true,
+    "all_h0_adversarial_target_cases_are_green": true,
+    "full_harness_suite_passes_in_a_fresh_isolated_local_repository": true
+  },
+  "adversarialEvidence": {
+    "requiredCaseIds": [
+      "candidate-commit-binding-enforced",
+      "git-status-error-blocked",
+      "staged-index-content-bound"
+    ],
+    "observedPassingCaseIds": [
+      "candidate-commit-binding-enforced",
+      "git-status-error-blocked",
+      "staged-index-content-bound"
+    ],
+    "completeCatalogMarker": "HARNESS_V4_TARGET_CONTRACT: PASS"
+  },
+  "isolatedAcceptance": {
+    "status": "PASS",
+    "networkUsed": false,
+    "externalServicesCalled": false,
+    "temporaryRootsUsed": true,
+    "sharedRuntimeDataUsed": false,
+    "repositoryInitializedLocally": true,
+    "testCount": 29,
+    "attempts": [
+      {
+        "attempt": 1,
+        "status": "PASS",
+        "reason": "A fresh temporary repository contains only the Harness implementation, hooks, configuration, authority evidence and milestone documents required by the test suite."
+      }
+    ],
+    "commands": [
+      {
+        "command": "node harness/tests/v4-h3-git-candidate.test.mjs",
+        "expectedMarker": "HARNESS_V4_H3_GIT_CANDIDATE: PASS",
+        "observed": "PASS"
+      },
+      {
+        "command": "node harness/tests/v4-trust-contract.red.mjs",
+        "expectedMarker": "HARNESS_V4_TARGET_CONTRACT: PASS",
+        "observed": "PASS"
+      },
+      {
+        "command": "node harness/tests/run-all.mjs",
+        "expectedMarker": "HARNESS_TEST_SUITE_PASS (29 tests)",
+        "observed": "PASS"
+      }
+    ]
+  },
+  "sourceHashes": {
+    "harness/lib/guard.mjs": "sha256:c5784949f8a0e10e27e62d4a7473acef5b831d88cf62106efe8d6c5b41ec88cf",
+    "harness/lib/manifest.mjs": "sha256:1b765fb0b58555edd13701123d6d6d586a79813ddb6139293ad37e23982064a1",
+    "harness/lib/v4/evidence-store.mjs": "sha256:0ffbed2543605ec6a028539f3fa1c6debf114c8216a768d44c30790c87258deb",
+    "harness/lib/v4/git-candidate.mjs": "sha256:decd2e4bf216c4af6285fbaa7a9d8634c400e39154ffe2fc5e27b16e14d87252",
+    "harness/lib/validator.mjs": "sha256:24aac8668a9066b2b4e513754a6a0b8e3c7039d7fb18ca1db1acf2a07bd5d4ab",
+    "harness/tests/guard-cache.test.mjs": "sha256:390ac27e926f00b6273f288f774552a974c43f8b7545e7ae4aee53018ed463a8",
+    "harness/tests/guard.test.mjs": "sha256:eafd06ef267e5905bfd07fc63eb0d40c0299ffa1e0174d817a86d85d5320ba56",
+    "harness/tests/manifest.test.mjs": "sha256:7622f0797451657510f64326dfac136eac8e6abc58f3ca74ea06004750832ddf",
+    "harness/tests/pr10-report-ci.test.mjs": "sha256:5851a78c53a937a2eac430c22ad6864593c4d02b29d76a9148f11e0f95ea7289",
+    "harness/tests/run-command.test.mjs": "sha256:eb978aee0012dce57fec210d7461dcde6af9b25298ea55f45ca00f785cb76fb7",
+    "harness/tests/v4-h0-contract-baseline.test.mjs": "sha256:1f748131e409b9a4f287a620e960ca09bd8a5d37da35f094610ed2a3fdd316ae",
+    "harness/tests/v4-h1-fail-closed.test.mjs": "sha256:73d1bff533fd2c0725dc9490a2a53b189dd8d3136265d5d9df03a61d705f5217",
+    "harness/tests/v4-h2-evidence-chain.test.mjs": "sha256:612b1d18da5058f455fc49783266d936d5501a27b34b660a32b7ee359e30e6c3",
+    "harness/tests/v4-h3-git-candidate.test.mjs": "sha256:d7bc052e43b3423a14fd52dc2db9c1c2ee83c68ee3fa07671870beda08856399",
+    "harness/tests/v4-trust-contract.red.mjs": "sha256:627daf61fc5690cd21be08af783a1cd3e8aaee184ca84ea8288bf3c3fadf8f55"
+  },
+  "hardFailures": [],
+  "nextMilestoneEligible": true,
+  "finalMarker": "HARNESS_V4_H3_GIT_CANDIDATE: PASS"
+}

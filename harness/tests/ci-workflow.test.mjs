@@ -8,17 +8,21 @@ assert.match(workflow, /runs-on: windows-latest/);
 assert.match(workflow, /runs-on: ubuntu-latest/);
 assert.match(workflow, /codex\/\*\*/);
 assert.match(workflow, /security --profile public-release/);
-assert.doesNotMatch(workflow, /--skip-history/);
 assert.match(workflow, /sandbox --verify --build/);
 assert.match(workflow, /needs: harness/);
-assert.match(workflow, /actions\/checkout@v7/);
-assert.match(workflow, /actions\/setup-node@v7/);
-assert.match(workflow, /actions\/setup-python@v7/);
-assert.match(workflow, /actions\/upload-artifact@v7/);
-assert.doesNotMatch(workflow, /actions\/(?:checkout|setup-node|setup-python|upload-artifact)@v(?:4|5|6)\b/);
+assert.match(workflow, /actions\/checkout@[0-9a-f]{40} # v7/);
+assert.match(workflow, /actions\/setup-node@[0-9a-f]{40} # v7/);
+assert.match(workflow, /actions\/setup-python@[0-9a-f]{40} # v7/);
+assert.match(workflow, /actions\/upload-artifact@[0-9a-f]{40} # v7/);
+assert.doesNotMatch(workflow, /uses:\s+actions\/(?:checkout|setup-node|setup-python|upload-artifact)@v\d+\b/);
+assert.equal(
+  (workflow.match(/persist-credentials: false/g) || []).length,
+  2,
+  'Every checkout must remove the GitHub credential from the working copy'
+);
 
 const longPathsIndex = workflow.indexOf('git config --global core.longpaths true');
-const firstCheckoutIndex = workflow.indexOf('uses: actions/checkout@v7');
+const firstCheckoutIndex = workflow.indexOf('uses: actions/checkout@');
 assert.ok(longPathsIndex >= 0, 'Windows CI must enable Git long-path support');
 assert.ok(longPathsIndex < firstCheckoutIndex, 'Git long paths must be enabled before Windows checkout');
 

@@ -5,6 +5,12 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import {
+  acquireLease,
+  initializeRunState,
+  releaseLease,
+  transitionRunState
+} from '../lib/v4/concurrent-state.mjs';
 
 const testDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(testDir, '..', '..');
@@ -56,6 +62,12 @@ const allowedWrite = runHook(preToolHook, plannedRoot, {
   tool_input: { cmd: 'Set-Content -Path note.txt -Value x' }
 });
 assert.equal(allowedWrite.hookSpecificOutput?.permissionDecision || 'allow', 'allow');
+const misleadingLatest = JSON.parse(fs.readFileSync(
+  path.join(plannedRoot, '.harness', 'state', 'latest-run.json'),
+  'utf8'
+));
+assert.equal(misleadingLatest.authority, false);
+assert.equal(misleadingLatest.runId, 'attacker-controlled-navigation');
 
 const deniedOutOfScope = runHook(preToolHook, plannedRoot, {
   tool_name: 'functions.exec_command',
@@ -79,7 +91,7 @@ const deniedUnclosedCommit = runHook(preToolHook, plannedRoot, {
 });
 assert.equal(deniedUnclosedCommit.hookSpecificOutput?.permissionDecision, 'deny');
 assert.match(deniedUnclosedCommit.hookSpecificOutput?.permissionDecisionReason || '', /validated Harness closeout/);
-fs.rmSync(path.join(plannedRoot, 'note.txt'));
+removeTree(path.join(plannedRoot, 'note.txt'));
 
 fs.writeFileSync(path.join(plannedRoot, 'outside.txt'), 'unparsed side effect\n', 'utf8');
 const deniedPostSideEffect = runHook(postToolHook, plannedRoot, {
@@ -88,7 +100,7 @@ const deniedPostSideEffect = runHook(postToolHook, plannedRoot, {
 });
 assert.equal(deniedPostSideEffect.decision, 'block');
 assert.match(deniedPostSideEffect.reason || '', /unapproved repository side effect/);
-fs.rmSync(path.join(plannedRoot, 'outside.txt'));
+removeTree(path.join(plannedRoot, 'outside.txt'));
 
 const expiredRoot = makeGitProject('harness-hook-expired-');
 writeHarnessRun(expiredRoot, 'expired-run', {
@@ -115,12 +127,32 @@ const deniedCommit = runHook(preToolHook, changedCommitRoot, {
 assert.equal(deniedCommit.hookSpecificOutput?.permissionDecision, 'deny');
 assert.match(deniedCommit.hookSpecificOutput?.permissionDecisionReason || '', /different commit/);
 
-const unicodeRoot = makeGitProject('harness-hook-unicode-');
+const unicodeRoot = makeGitProject('harness-hook-unicode-路径-');
 fs.writeFileSync(path.join(unicodeRoot, 'tracked.txt'), 'dirty\n', 'utf8');
-writeHarnessRun(unicodeRoot, '中文-run', { validation: false });
+writeHarnessRun(unicodeRoot, 'unicode-run', { validation: false });
 const unicodeStop = runHook(stopHook, unicodeRoot, { stop_hook_active: false });
 assert.equal(unicodeStop.decision, 'block');
 assert.match(unicodeStop.reason || '', /no validation result/);
+
+const ambiguousRoot = makeGitProject('harness-hook-ambiguous-');
+writeHarnessRun(ambiguousRoot, 'first-run', { validation: false, allowedFiles: ['note.txt'] });
+writeHarnessRun(ambiguousRoot, 'second-run', { validation: false, allowedFiles: ['note.txt'] });
+const deniedAmbiguous = runHook(preToolHook, ambiguousRoot, {
+  tool_name: 'functions.exec_command',
+  tool_input: { cmd: 'Set-Content -Path note.txt -Value x' }
+});
+assert.equal(deniedAmbiguous.hookSpecificOutput?.permissionDecision, 'deny');
+assert.match(deniedAmbiguous.hookSpecificOutput?.permissionDecisionReason || '', /multiple authoritative Harness runs/);
+const explicitRunAllowed = runHook(
+  preToolHook,
+  ambiguousRoot,
+  {
+    tool_name: 'functions.exec_command',
+    tool_input: { cmd: 'Set-Content -Path note.txt -Value x' }
+  },
+  { HARNESS_RUN_ID: 'first-run' }
+);
+assert.equal(explicitRunAllowed.hookSpecificOutput?.permissionDecision || 'allow', 'allow');
 
 const staleRoot = makeGitProject('harness-hook-stale-');
 writeHarnessRun(staleRoot, 'validated-run', {
@@ -187,15 +219,35 @@ const allowedClosedCommit = runHook(preToolHook, validRoot, {
 });
 assert.equal(allowedClosedCommit.hookSpecificOutput?.permissionDecision || 'allow', 'allow');
 
-fs.rmSync(noHarnessRoot, { recursive: true, force: true });
-fs.rmSync(plannedRoot, { recursive: true, force: true });
-fs.rmSync(expiredRoot, { recursive: true, force: true });
-fs.rmSync(changedCommitRoot, { recursive: true, force: true });
-fs.rmSync(unicodeRoot, { recursive: true, force: true });
-fs.rmSync(staleRoot, { recursive: true, force: true });
-fs.rmSync(incompleteCloseoutRoot, { recursive: true, force: true });
-fs.rmSync(autoCloseoutRoot, { recursive: true, force: true });
-fs.rmSync(validRoot, { recursive: true, force: true });
+const legacyStatusRoot = makeGitProject('harness-hook-v3-status-');
+fs.writeFileSync(path.join(legacyStatusRoot, 'tracked.txt'), 'legacy status must not authorize commit\n', 'utf8');
+writeHarnessRun(legacyStatusRoot, 'legacy-status-run', {
+  validation: true,
+  validationResult: { status: 'passed-or-skipped', results: [] },
+  status: 'passed',
+  phase: 'closeout-complete'
+});
+const deniedLegacyStatusCommit = runHook(preToolHook, legacyStatusRoot, {
+  tool_name: 'functions.exec_command',
+  tool_input: { cmd: 'git commit -m "legacy status must be blocked"' }
+});
+assert.equal(deniedLegacyStatusCommit.hookSpecificOutput?.permissionDecision, 'deny');
+assert.match(
+  deniedLegacyStatusCommit.hookSpecificOutput?.permissionDecisionReason || '',
+  /validation outcome=None/
+);
+
+removeTree(noHarnessRoot);
+removeTree(plannedRoot);
+removeTree(expiredRoot);
+removeTree(changedCommitRoot);
+removeTree(unicodeRoot);
+removeTree(ambiguousRoot);
+removeTree(staleRoot);
+removeTree(incompleteCloseoutRoot);
+removeTree(autoCloseoutRoot);
+removeTree(validRoot);
+removeTree(legacyStatusRoot);
 
 console.log('HOOKS_POLICY_TEST_PASS');
 
@@ -216,7 +268,8 @@ function writeHarnessRun(root, runName, {
   allowedPathPatterns = [],
   expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString(),
   status = 'planned',
-  phase = 'implementation-ready'
+  phase = 'implementation-ready',
+  validationResult = { outcome: 'PASS', results: [] }
 }) {
   const runDir = path.join(root, '.harness', 'runs', runName);
   fs.mkdirSync(path.join(root, '.harness', 'state'), { recursive: true });
@@ -227,8 +280,50 @@ function writeHarnessRun(root, runName, {
   const branch = git(root, ['rev-parse', '--abbrev-ref', 'HEAD']).stdout.trim();
   const commit = git(root, ['rev-parse', 'HEAD']).stdout.trim();
   const taskFingerprint = 'sha256:hook-test';
+  const sessionFingerprint = `sha256:${crypto.createHash('sha256').update(sessionId).digest('hex')}`;
+  const workspaceDigest = `sha256:${crypto.createHash('sha256').update(`workspace:${runName}`).digest('hex')}`;
+  const expiresAtMs = Date.parse(expiresAt);
+  const leaseNow = expiresAtMs <= Date.now() ? expiresAtMs - 1000 : Date.now();
+  const lease = acquireLease({
+    stateDir: path.join(root, '.harness', 'state'),
+    resourceId: `run:${runName}`,
+    runId: runName,
+    ownerId: sessionId,
+    ttlMs: Math.max(1, expiresAtMs - leaseNow),
+    now: leaseNow,
+    metadata: { source: 'CODEX_THREAD_ID', purpose: 'session-binding' }
+  });
+  const nonceFingerprint = `sha256:${crypto.createHash('sha256').update(lease.nonce).digest('hex')}`;
+  initializeRunState({
+    stateDir: path.join(root, '.harness', 'state'),
+    runId: runName,
+    ownerFingerprint: sessionFingerprint,
+    nonceFingerprint,
+    workspace: { workspaceDigest },
+    data: { taskFingerprint }
+  });
+  if (status === 'passed') {
+    transitionRunState({
+      stateDir: path.join(root, '.harness', 'state'),
+      runId: runName,
+      lifecycle: 'passed'
+    });
+    releaseLease({
+      stateDir: path.join(root, '.harness', 'state'),
+      resourceId: `run:${runName}`,
+      ownerId: sessionId,
+      nonce: lease.nonce,
+      reason: 'fixture-closeout'
+    });
+  } else if (status !== 'planned') {
+    transitionRunState({
+      stateDir: path.join(root, '.harness', 'state'),
+      runId: runName,
+      lifecycle: 'running'
+    });
+  }
   fs.writeFileSync(path.join(runDir, 'run-manifest.json'), `${JSON.stringify({
-    schemaVersion: 4,
+    schemaVersion: 6,
     runId: runName,
     status,
     phase,
@@ -236,9 +331,12 @@ function writeHarnessRun(root, runName, {
     repo: { branch, commit },
     binding: {
       taskFingerprint,
-      sessionFingerprint: `sha256:${crypto.createHash('sha256').update(sessionId).digest('hex')}`,
+      sessionFingerprint,
       sessionSource: 'CODEX_THREAD_ID',
       sessionBindingRequired: true,
+      leaseResourceId: `run:${runName}`,
+      leaseNonceFingerprint: nonceFingerprint,
+      workspaceDigest,
       branch,
       commit,
       expiresAt,
@@ -247,15 +345,20 @@ function writeHarnessRun(root, runName, {
     }
   }, null, 2)}\n`, 'utf8');
   if (validation) {
-    fs.writeFileSync(path.join(runDir, 'validation-result.json'), '{"status":"passed","results":[]}\n', 'utf8');
+    fs.writeFileSync(
+      path.join(runDir, 'validation-result.json'),
+      `${JSON.stringify(validationResult)}\n`,
+      'utf8'
+    );
     fs.writeFileSync(path.join(runDir, 'post-validation-guard-result.json'), '{"status":"passed","findings":[]}\n', 'utf8');
     fs.writeFileSync(path.join(runDir, 'pr-report.md'), '# Harness closeout report\n', 'utf8');
   }
   fs.writeFileSync(path.join(root, '.harness', 'state', 'latest-run.json'), `${JSON.stringify({
-    task: 'hook test',
-    runId: runName,
-    taskFingerprint,
-    runDir
+    schemaVersion: 2,
+    authority: false,
+    purpose: 'navigation-only',
+    runId: 'attacker-controlled-navigation',
+    runDir: path.join(root, '.harness', 'runs', 'attacker-controlled-navigation')
   }, null, 2)}\n`, 'utf8');
 }
 
@@ -270,7 +373,7 @@ if (args[0] !== 'closeout') process.exit(2);
 const runDir = args[args.indexOf('--run') + 1];
 const manifestPath = path.join(runDir, 'run-manifest.json');
 const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-fs.writeFileSync(path.join(runDir, 'validation-result.json'), JSON.stringify({ status: 'passed', results: [] }) + '\\n');
+fs.writeFileSync(path.join(runDir, 'validation-result.json'), JSON.stringify({ outcome: 'PASS', results: [] }) + '\\n');
 fs.writeFileSync(path.join(runDir, 'post-validation-guard-result.json'), JSON.stringify({ status: 'passed', findings: [] }) + '\\n');
 fs.writeFileSync(path.join(runDir, 'pr-report.md'), '# Automatic closeout\\n');
 manifest.status = 'passed';
@@ -301,4 +404,16 @@ function git(cwd, args) {
   const res = spawnSync('git', args, { cwd, encoding: 'utf8' });
   assert.equal(res.status, 0, `${res.stdout}\n${res.stderr}`);
   return res;
+}
+
+function removeTree(target) {
+  if (!fs.existsSync(target)) return;
+  const stat = fs.lstatSync(target);
+  if (stat.isDirectory() && !stat.isSymbolicLink()) {
+    for (const entry of fs.readdirSync(target)) removeTree(path.join(target, entry));
+    fs.rmdirSync(target);
+  } else {
+    fs.unlinkSync(target);
+  }
+  assert.equal(fs.existsSync(target), false, `cleanup did not remove ${target}`);
 }

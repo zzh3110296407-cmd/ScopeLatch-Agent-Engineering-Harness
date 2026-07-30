@@ -11,19 +11,24 @@ const cliPath = path.join(harnessRoot, 'cli.mjs');
 
 const passRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'harness-run-pass-'));
 writeHarnessConfig(passRoot);
+copyInvariantCatalog(passRoot);
 fs.writeFileSync(path.join(passRoot, 'README.md'), '# Temp project\n', 'utf8');
+git(passRoot, ['init']);
+git(passRoot, ['add', '.']);
+git(passRoot, ['-c', 'user.name=Harness Test', '-c', 'user.email=harness@example.test', 'commit', '-m', 'init']);
 
 const pass = runCli(passRoot, ['run', '更新 README 文档']);
 assert.equal(pass.status, 0, `${pass.stdout}\n${pass.stderr}`);
 assert.match(pass.stdout, /Harness run:/);
 assert.match(pass.stdout, /Guard status: passed/);
-assert.match(pass.stdout, /Validation status: passed/);
+assert.match(pass.stdout, /Validation outcome: PASS/);
 
 const passManifest = latestManifest(passRoot);
 assert.equal(passManifest.status, 'passed');
 assert.equal(passManifest.phase, 'closeout-complete');
 assert.equal(passManifest.guard.status, 'passed');
-assert.equal(passManifest.validation.resultStatus, 'passed');
+assert.equal(passManifest.validation.resultOutcome, 'PASS');
+assert.equal(Object.hasOwn(passManifest.validation, 'resultStatus'), false);
 assert.ok(passManifest.artifacts.guardResult);
 assert.ok(passManifest.artifacts.validationResult);
 assert.ok(passManifest.artifacts.postValidationGuardResult);
@@ -35,6 +40,7 @@ assert.match(`${skipped.stdout}\n${skipped.stderr}`, /skip-validate.*not support
 
 const failRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'harness-run-guard-fail-'));
 writeHarnessConfig(failRoot);
+copyInvariantCatalog(failRoot);
 fs.writeFileSync(path.join(failRoot, 'README.md'), '# Temp project\n', 'utf8');
 git(failRoot, ['init']);
 git(failRoot, ['add', '.']);
@@ -45,7 +51,7 @@ fs.writeFileSync(path.join(failRoot, 'secrets', 'token.txt'), 'not-a-real-secret
 const fail = runCli(failRoot, ['run', '更新 README 文档']);
 assert.notEqual(fail.status, 0);
 assert.match(fail.stdout, /Guard status: failed/);
-assert.doesNotMatch(fail.stdout, /Validation status:/);
+assert.doesNotMatch(fail.stdout, /Validation outcome:/);
 
 const failManifest = latestManifest(failRoot);
 assert.equal(failManifest.status, 'failed');
@@ -79,6 +85,12 @@ function writeHarnessConfig(root) {
       fullCI: passCommand
     }
   }, null, 2)}\n`, 'utf8');
+}
+
+function copyInvariantCatalog(root) {
+  const target = path.join(root, 'harness', 'contracts', 'v4', 'invariant-catalog.json');
+  fs.mkdirSync(path.dirname(target), { recursive: true });
+  fs.copyFileSync(path.join(harnessRoot, 'contracts', 'v4', 'invariant-catalog.json'), target);
 }
 
 function runCli(root, args) {

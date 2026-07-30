@@ -1,0 +1,192 @@
+{
+  "schemaVersion": 1,
+  "milestone": "H5",
+  "contractVersion": "harness-trust-v4.0.0",
+  "generatedAt": "2026-07-29T14:45:33+08:00",
+  "predecessor": {
+    "milestone": "H4",
+    "reportPath": ".harness/docs/harness-v4-h4-invariant-catalog-report.json",
+    "reportDigest": "sha256:4ce84c8f2d3f1b04cbb6fa5cbf43a5037578d597fcba53993ff4b8598025e8b2",
+    "regressionStatus": "PASS"
+  },
+  "scope": {
+    "networkUsed": false,
+    "externalServicesCalled": false,
+    "applicationFilesChanged": false,
+    "phase9FilesChanged": false,
+    "auditorWritesRepositoryState": false,
+    "formalLocalOutcome": "LOCAL_ATTESTED",
+    "formalCiOutcomeAvailable": false,
+    "formalCiOutcomeReason": "CI attestation remains blocked until the H8 CI shadow rollout establishes a trusted CI identity and candidate policy."
+  },
+  "observations": [
+    {
+      "invariantResultId": "sha256:4f238168912a1f1cf9895ebf02f7e6354b31afe7ae4ab49e76717d6ebb8f3bba",
+      "scenarioId": "auditor-independent",
+      "boundary": "auditor-package",
+      "outcome": "PASS",
+      "evidence": "The auditor imports only Node built-ins and independently parses the manifest, plan, impact, binding and sealed evidence."
+    },
+    {
+      "invariantResultId": "sha256:cda75a461cb7c4be33e47c2319d4b19423df31b26b7e57d9459fd07d8ad4f5dc",
+      "scenarioId": "executor-verdict-ignored",
+      "boundary": "attestation-recomputation",
+      "outcome": "PASS",
+      "evidence": "Changing mutable executor verdict fields does not affect the independently recomputed attestation."
+    },
+    {
+      "invariantResultId": "sha256:e34597334380b2ece9d2e59255a840a6f804a284c9283bb6db338dad69e8ec57",
+      "scenarioId": "corpus-tamper-detected",
+      "boundary": "content-addressed-evidence",
+      "outcome": "PASS",
+      "evidence": "Changing a sealed validation-result object without updating its digest produces INVALIDATED."
+    },
+    {
+      "invariantResultId": "sha256:36d6a346d0c0a2bc19eeb074896c18047d7d1c61f6bbda4a04e6b2c928013a44",
+      "scenarioId": "attestation-authority-exclusive",
+      "boundary": "executor-auditor-separation",
+      "outcome": "PASS",
+      "evidence": "Executor runtime sources contain no LOCAL_ATTESTED, FORMAL_PASS or FORMAL_EXCEPTION authority vocabulary."
+    },
+    {
+      "invariantResultId": "sha256:c2f71ff00c6a20390fa0087328b065f77b3f4b8d45b5dee231c03c9c60e8b9d9",
+      "scenarioId": "read-only-cli",
+      "boundary": "auditor-process",
+      "outcome": "PASS",
+      "evidence": "A before-and-after repository file snapshot is unchanged by the auditor CLI."
+    },
+    {
+      "invariantResultId": "sha256:7d441a295c4ada957437df63e5352d9e288446f0a6022911ce15a16f62030ddf",
+      "scenarioId": "candidate-policy-source-bound",
+      "boundary": "attestation-binding",
+      "outcome": "PASS",
+      "evidence": "The attestation binds the Git candidate tree, candidate digest, engine, policy, source authority, catalog, plan and evidence root."
+    },
+    {
+      "invariantResultId": "sha256:1942135bcad53bfa21e193f66538414c960b4f586a942d8eb1d17da56dd5ab6b",
+      "scenarioId": "mode-gated",
+      "boundary": "attestation-mode",
+      "outcome": "PASS",
+      "evidence": "formal-ci requests remain BLOCKED until H8 instead of being mislabeled as locally attested."
+    },
+    {
+      "invariantResultId": "sha256:cbb641fbfc1a3ab9613a53eb30e45e3943452c449d9d6e310dbdca812bdc2678",
+      "scenarioId": "predecessor-regression",
+      "boundary": "milestone-chain",
+      "outcome": "PASS",
+      "evidence": "The H4 predecessor report is content-digest bound and reports PASS."
+    },
+    {
+      "invariantResultId": "sha256:891e7ce513ab72414bfe2277e35b61f6913db0a3c5a8a300bb3e7c87b584f1e4",
+      "scenarioId": "isolated-suite",
+      "boundary": "fresh-local-repository",
+      "outcome": "PASS",
+      "evidence": "The complete 31-test Harness suite, including H0 through H5, passes in a newly initialized temporary Git repository without network access."
+    }
+  ],
+  "acceptanceEvidence": [
+    {
+      "acceptanceId": "executor_written_verdicts_are_ignored",
+      "invariantResultIds": [
+        "sha256:cda75a461cb7c4be33e47c2319d4b19423df31b26b7e57d9459fd07d8ad4f5dc"
+      ],
+      "outcome": "PASS"
+    },
+    {
+      "acceptanceId": "auditor_recomputation_detects_corpus_tampering",
+      "invariantResultIds": [
+        "sha256:e34597334380b2ece9d2e59255a840a6f804a284c9283bb6db338dad69e8ec57"
+      ],
+      "outcome": "PASS"
+    },
+    {
+      "acceptanceId": "only_the_independent_auditor_can_issue_attestation_outcomes",
+      "invariantResultIds": [
+        "sha256:4f238168912a1f1cf9895ebf02f7e6354b31afe7ae4ab49e76717d6ebb8f3bba",
+        "sha256:36d6a346d0c0a2bc19eeb074896c18047d7d1c61f6bbda4a04e6b2c928013a44"
+      ],
+      "outcome": "PASS"
+    },
+    {
+      "acceptanceId": "auditor_is_read_only",
+      "invariantResultIds": [
+        "sha256:c2f71ff00c6a20390fa0087328b065f77b3f4b8d45b5dee231c03c9c60e8b9d9"
+      ],
+      "outcome": "PASS"
+    },
+    {
+      "acceptanceId": "attestation_is_digest_bound_to_all_trust_inputs",
+      "invariantResultIds": [
+        "sha256:7d441a295c4ada957437df63e5352d9e288446f0a6022911ce15a16f62030ddf"
+      ],
+      "outcome": "PASS"
+    },
+    {
+      "acceptanceId": "unsupported_formal_modes_fail_closed",
+      "invariantResultIds": [
+        "sha256:1942135bcad53bfa21e193f66538414c960b4f586a942d8eb1d17da56dd5ab6b"
+      ],
+      "outcome": "PASS"
+    },
+    {
+      "acceptanceId": "predecessor_milestones_remain_regressed",
+      "invariantResultIds": [
+        "sha256:cbb641fbfc1a3ab9613a53eb30e45e3943452c449d9d6e310dbdca812bdc2678"
+      ],
+      "outcome": "PASS"
+    },
+    {
+      "acceptanceId": "isolated_full_suite_passes",
+      "invariantResultIds": [
+        "sha256:891e7ce513ab72414bfe2277e35b61f6913db0a3c5a8a300bb3e7c87b584f1e4"
+      ],
+      "outcome": "PASS"
+    }
+  ],
+  "isolatedAcceptance": {
+    "status": "PASS",
+    "networkUsed": false,
+    "externalServicesCalled": false,
+    "temporaryRootsUsed": true,
+    "sharedRuntimeDataUsed": false,
+    "repositoryInitializedLocally": true,
+    "testCount": 31,
+    "attempts": [
+      {
+        "attempt": 1,
+        "status": "BLOCKED_BEFORE_EXECUTION",
+        "reason": "The isolation copier incorrectly required a nonexistent repository-root package.json; no Harness test started."
+      },
+      {
+        "attempt": 2,
+        "status": "BLOCKED_BEFORE_EXECUTION",
+        "reason": "The isolation copier initially resolved readinessFiles against the repository root instead of source-authority.root; no Harness test started."
+      },
+      {
+        "attempt": 3,
+        "status": "PASS",
+        "reason": "A fresh local Git repository was populated from the authoritative source root and the complete suite passed."
+      }
+    ],
+    "commands": [
+      {
+        "command": "node harness/tests/v4-h5-independent-auditor.test.mjs",
+        "expectedMarker": "HARNESS_V4_H5_INDEPENDENT_AUDITOR: PASS",
+        "observed": "PASS"
+      },
+      {
+        "command": "node harness/tests/run-all.mjs",
+        "expectedMarker": "HARNESS_TEST_SUITE_PASS (31 tests)",
+        "observed": "PASS"
+      }
+    ]
+  },
+  "sourceHashes": {
+    "harness/auditor/cli.mjs": "sha256:5e1b14de74659293b088a9a05617f92219685d04ea4da4ea0fca8d800faabf15",
+    "harness/auditor/lib/auditor.mjs": "sha256:468676b0f812e891a9117485077295580434691535c88073a23f11364b654bc0",
+    "harness/tests/v4-h5-independent-auditor.test.mjs": "sha256:32362986e55c885466a6256de3d9550404c152e34c0902d23eb3eb5e7fc777e9"
+  },
+  "hardFailures": [],
+  "nextMilestoneEligible": true,
+  "finalMarker": "HARNESS_V4_H5_INDEPENDENT_AUDITOR: PASS"
+}

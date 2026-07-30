@@ -1,10 +1,11 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import { isTextLike, matchesAny, normalizePath, readJson, runFile, unique, writeJson } from './common.mjs';
+import { isTextLike, matchesAny, normalizePath, readJson, unique, writeJson } from './common.mjs';
 import { manifestPathForRun, updateRunManifest } from './manifest.mjs';
 import { allowedScopeFiles, allowedScopePatterns } from './scope.mjs';
 import { containsLocalAbsolutePath, scanContentForSensitiveMaterial } from './security-scanner.mjs';
+import { readGitIndexEntries, readGitStatusChanges } from './v4/git-candidate.mjs';
 
 const guardIgnoredPatterns = [
   '.harness/runs/**',
@@ -36,9 +37,7 @@ const lockfilePatterns = [
 ];
 
 const runtimeDataPatterns = [
-  '**/app/data/**',
-  '**/runtime-data/**',
-  '**/.runtime/**'
+  '**/app/data/**'
 ];
 
 const generatedPatterns = [
@@ -151,9 +150,7 @@ export function evaluateDiffGuard({ root = null, config = {}, impactReport = {},
 }
 
 export function readWorkingTreeChanges(root) {
-  const res = runFile('git', ['status', '--porcelain=v1', '-uall'], { cwd: root, timeoutMs: 10000 });
-  if (res.exitCode !== 0) return [];
-  return res.stdout.split(/\r?\n/).filter(Boolean).map(parsePorcelainLine).filter(Boolean);
+  return readGitStatusChanges(root);
 }
 
 export function readGuardedWorkingTreeSnapshot(root, options = {}) {
@@ -163,17 +160,29 @@ export function readGuardedWorkingTreeSnapshot(root, options = {}) {
   const cachePath = path.join(root, '.harness', 'cache', 'guard-file-hashes.json');
   const cache = cacheEnabled ? readJson(cachePath, { schemaVersion: 1, entries: {} }) : { schemaVersion: 1, entries: {} };
   const metrics = { enabled: cacheEnabled, hits: 0, misses: 0 };
+  const indexEntries = readGitIndexEntries(root);
+  const indexByPath = new Map(indexEntries
+    .filter((entry) => entry.stage === 0)
+    .map((entry) => [entry.path, entry]));
   const snapshot = normalizeChanges(readWorkingTreeChanges(root))
     .filter((change) => !matchesAny(change.path, guardIgnoredPatterns))
-    .map((change) => ({
-      path: change.path,
-      oldPath: change.oldPath,
-      kind: change.kind,
-      status: change.status,
-      indexStatus: change.indexStatus,
-      worktreeStatus: change.worktreeStatus,
-      hash: hashWorkingTreeFile(root, change.path, cache.entries, metrics)
-    }))
+    .map((change) => {
+      const indexEntry = indexByPath.get(change.path) || null;
+      const worktreeHash = hashWorkingTreeFile(root, change.path, cache.entries, metrics);
+      return {
+        path: change.path,
+        oldPath: change.oldPath,
+        kind: change.kind,
+        status: change.status,
+        indexStatus: change.indexStatus,
+        worktreeStatus: change.worktreeStatus,
+        hash: worktreeHash,
+        worktreeHash,
+        indexHash: indexEntry?.objectId || null,
+        indexMode: indexEntry?.mode || null,
+        indexStage: indexEntry?.stage ?? null
+      };
+    })
     .sort((a, b) => a.path.localeCompare(b.path));
   if (cacheEnabled && metrics.misses > 0) {
     const currentPaths = new Set(snapshot.map((entry) => entry.path));
@@ -250,28 +259,6 @@ function normalizeChanges(changes) {
     indexStatus: change.indexStatus || null,
     worktreeStatus: change.worktreeStatus || null
   })).filter((change) => change.path);
-}
-
-function parsePorcelainLine(line) {
-  const indexStatus = line[0];
-  const worktreeStatus = line[1];
-  const status = `${indexStatus}${worktreeStatus}`;
-  const body = line.slice(3);
-  if (!body) return null;
-
-  if (status.includes('R') && body.includes(' -> ')) {
-    const [oldPath, newPath] = body.split(' -> ');
-    return { path: cleanGitPath(newPath), oldPath: cleanGitPath(oldPath), kind: 'renamed', status, indexStatus, worktreeStatus };
-  }
-
-  return {
-    path: cleanGitPath(body),
-    oldPath: null,
-    kind: inferKindFromStatus(status),
-    status,
-    indexStatus,
-    worktreeStatus
-  };
 }
 
 function cleanGitPath(file) {

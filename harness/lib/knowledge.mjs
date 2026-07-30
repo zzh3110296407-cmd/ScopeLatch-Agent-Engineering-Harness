@@ -3,13 +3,24 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { ensureDir, normalizePath, readJson, unique, writeJson, writeText } from './common.mjs';
 
-export function recordFailureKnowledge({ root, runDir }) {
+const TRACKED_KNOWLEDGE_DIR = path.join('.harness', 'knowledge');
+const RUNTIME_KNOWLEDGE_DIR = path.join('.harness', 'state', 'failure-knowledge');
+
+export function recordFailureKnowledge({
+  root,
+  runDir,
+  mode = process.env.HARNESS_OBSERVATION_MODE === 'shadow' ? 'read-only' : 'record'
+}) {
+  if (mode === 'read-only') {
+    return { status: 'skipped', reason: 'knowledge-read-only', count: 0 };
+  }
+  if (mode !== 'record') throw new Error(`Unsupported failure knowledge mode: ${mode}.`);
   const impactReport = readJson(path.join(runDir, 'impact-report.json'), null) || {};
   const evidence = failureEvidence(runDir, impactReport);
   if (!evidence) return { status: 'skipped', reason: 'no-failed-run-evidence', count: 0 };
   const manifest = readJson(path.join(runDir, 'run-manifest.json'), null) || {};
-  const knowledgeDir = path.join(root, '.harness', 'knowledge');
-  ensureDir(knowledgeDir);
+  const runtimeKnowledgeDir = path.join(root, RUNTIME_KNOWLEDGE_DIR);
+  ensureDir(runtimeKnowledgeDir);
   const relativeRunDir = normalizePath(path.relative(root, runDir));
   const eventId = `${relativeRunDir}:${evidence.signature}`;
   const entry = {
@@ -31,29 +42,33 @@ export function recordFailureKnowledge({ root, runDir }) {
     riskSignals: (impactReport.riskSignals || []).map((signal) => signal.signal || signal).filter(Boolean)
   };
 
-  const failuresPath = path.join(knowledgeDir, 'failures.jsonl');
-  const entries = readFailureEntries(failuresPath);
+  const failuresPath = path.join(runtimeKnowledgeDir, 'failures.jsonl');
+  const entries = combinedFailureEntries(root);
   const alreadyRecorded = entries.some((item) => item.eventId === eventId);
   if (!alreadyRecorded) fs.appendFileSync(failuresPath, `${JSON.stringify(entry)}\n`, 'utf8');
   const allEntries = alreadyRecorded ? entries : [...entries, entry];
   const count = allEntries.filter((item) => item.signature === evidence.signature).length;
-  const generated = regenerateRules({ root, knowledgeDir, entries: allEntries });
+  const candidatePath = regenerateRuleCandidates({
+    knowledgeDir: runtimeKnowledgeDir,
+    entries: allEntries,
+    reviews: readRuleReviews(path.join(root, TRACKED_KNOWLEDGE_DIR, 'rule-reviews.json'))
+  });
 
   return {
     status: alreadyRecorded ? 'already-recorded' : 'recorded',
     signature: evidence.signature,
     count,
     failuresPath,
-    candidatePath: generated.candidatePath,
-    rulesPath: generated.rulesPath
+    candidatePath,
+    rulesPath: null
   };
 }
 
 export function backfillFailureKnowledge({ root, runsDir = path.join(root, '.harness', 'runs'), rebuild = false }) {
   if (!fs.existsSync(runsDir)) return { status: 'skipped', scanned: 0, recorded: 0 };
   if (rebuild) {
-    const failuresPath = path.join(root, '.harness', 'knowledge', 'failures.jsonl');
-    if (fs.existsSync(failuresPath)) fs.rmSync(failuresPath);
+    const failuresPath = path.join(root, RUNTIME_KNOWLEDGE_DIR, 'failures.jsonl');
+    if (fs.existsSync(failuresPath)) fs.unlinkSync(failuresPath);
   }
   let scanned = 0;
   let recorded = 0;
@@ -93,7 +108,12 @@ export function promoteRuleCandidate({ root, candidateId, reviewer, reason }) {
   };
   upsertReview(state.reviews, review);
   writeRuleReviews(state.reviewPath, state.reviews);
-  regenerateRules({ root, knowledgeDir: state.knowledgeDir, entries: state.entries });
+  regenerateStableRules({ root, entries: state.entries, reviews: state.reviews });
+  regenerateRuleCandidates({
+    knowledgeDir: state.runtimeKnowledgeDir,
+    entries: state.entries,
+    reviews: state.reviews
+  });
   return { status: 'promoted', review, rulesPath: path.join(root, '.harness', 'rules.yaml') };
 }
 
@@ -115,7 +135,12 @@ export function rejectRuleCandidate({ root, candidateId, reviewer, reason }) {
   };
   upsertReview(state.reviews, review);
   writeRuleReviews(state.reviewPath, state.reviews);
-  regenerateRules({ root, knowledgeDir: state.knowledgeDir, entries: state.entries });
+  regenerateStableRules({ root, entries: state.entries, reviews: state.reviews });
+  regenerateRuleCandidates({
+    knowledgeDir: state.runtimeKnowledgeDir,
+    entries: state.entries,
+    reviews: state.reviews
+  });
   return { status: 'rejected', review };
 }
 
@@ -278,6 +303,12 @@ function normalizeFailureText(value) {
 function fileCluster(file) {
   const parts = normalizePath(file).split('/').filter(Boolean);
   if (!parts.length) return null;
+  if (parts[0] === 'Project Codes') {
+    const appIndex = parts.indexOf('app');
+    const layer = appIndex >= 0 ? parts[appIndex + 1] : null;
+    const area = appIndex >= 0 ? parts[appIndex + 2] : null;
+    return ['project-codes', layer, area].filter(Boolean).join('/').toLowerCase();
+  }
   if (parts[0] === 'harness' || parts[0] === '.harness' || parts[0] === '.codex') {
     return ['harness-control', parts[1]].filter(Boolean).join('/').toLowerCase();
   }
@@ -300,20 +331,29 @@ function readFailureEntries(file) {
   return entries;
 }
 
-function regenerateRules({ root, knowledgeDir, entries }) {
+function groupedRepeatedEntries(entries) {
   const grouped = new Map();
   for (const entry of entries) {
     if (!grouped.has(entry.signature)) grouped.set(entry.signature, []);
     grouped.get(entry.signature).push(entry);
   }
-  const repeated = [...grouped.entries()].filter(([, items]) => items.length >= 2);
-  const reviews = readRuleReviews(path.join(knowledgeDir, 'rule-reviews.json'));
-  const stable = repeated.filter(([signature]) => reviews.some((review) => review.signature === signature && review.status === 'approved'));
+  return [...grouped.entries()].filter(([, items]) => items.length >= 2);
+}
+
+function regenerateRuleCandidates({ knowledgeDir, entries, reviews }) {
+  ensureDir(knowledgeDir);
+  const repeated = groupedRepeatedEntries(entries);
   const candidatePath = path.join(knowledgeDir, 'rule-candidates.yaml');
-  const rulesPath = path.join(root, '.harness', 'rules.yaml');
   writeText(candidatePath, renderRules(repeated, { stable: false, reviews }));
+  return candidatePath;
+}
+
+function regenerateStableRules({ root, entries, reviews }) {
+  const repeated = groupedRepeatedEntries(entries);
+  const stable = repeated.filter(([signature]) => reviews.some((review) => review.signature === signature && review.status === 'approved'));
+  const rulesPath = path.join(root, '.harness', 'rules.yaml');
   writeText(rulesPath, renderRules(stable, { stable: true, reviews }));
-  return { candidatePath, rulesPath };
+  return rulesPath;
 }
 
 export function renderRules(groups, { stable, reviews }) {
@@ -344,9 +384,9 @@ export function renderRules(groups, { stable, reviews }) {
 }
 
 function knowledgeState(root) {
-  const knowledgeDir = path.join(root, '.harness', 'knowledge');
-  ensureDir(knowledgeDir);
-  const entries = readFailureEntries(path.join(knowledgeDir, 'failures.jsonl'));
+  const trackedKnowledgeDir = path.join(root, TRACKED_KNOWLEDGE_DIR);
+  const runtimeKnowledgeDir = path.join(root, RUNTIME_KNOWLEDGE_DIR);
+  const entries = combinedFailureEntries(root);
   const grouped = new Map();
   for (const entry of entries) {
     if (!grouped.has(entry.signature)) grouped.set(entry.signature, []);
@@ -359,8 +399,25 @@ function knowledgeState(root) {
       signature,
       entries: candidateEntries
     }));
-  const reviewPath = path.join(knowledgeDir, 'rule-reviews.json');
-  return { knowledgeDir, entries, candidates, reviewPath, reviews: readRuleReviews(reviewPath) };
+  const reviewPath = path.join(trackedKnowledgeDir, 'rule-reviews.json');
+  return {
+    trackedKnowledgeDir,
+    runtimeKnowledgeDir,
+    entries,
+    candidates,
+    reviewPath,
+    reviews: readRuleReviews(reviewPath)
+  };
+}
+
+function combinedFailureEntries(root) {
+  const tracked = readFailureEntries(path.join(root, TRACKED_KNOWLEDGE_DIR, 'failures.jsonl'));
+  const runtime = readFailureEntries(path.join(root, RUNTIME_KNOWLEDGE_DIR, 'failures.jsonl'));
+  const byEventId = new Map();
+  for (const entry of [...tracked, ...runtime]) {
+    if (entry?.eventId && !byEventId.has(entry.eventId)) byEventId.set(entry.eventId, entry);
+  }
+  return [...byEventId.values()];
 }
 
 function candidateEvidenceQuality(candidate) {

@@ -2,45 +2,72 @@
   "schemaVersion": 1,
   "status": "ready",
   "root": ".",
-  "phase": "3.4",
-  "declaredAt": "2026-07-23",
-  "requiredMarkers": ["harness/lib", "harness/tests"],
+  "phase": "4.0",
+  "declaredAt": "2026-07-30",
+  "requiredMarkers": [
+    "harness/lib/v4",
+    "harness/contracts/v4",
+    "harness/auditor",
+    "harness/tests"
+  ],
   "readinessFiles": [
     "harness/cli.mjs",
     "harness/version.json",
+    "harness/contracts/v4/invariant-catalog.json",
+    "harness/auditor/cli.mjs",
     ".codex/hooks/pre_tool_use_policy.py",
     ".codex/hooks/post_tool_use_guard.py",
     ".codex/hooks/stop_guard.py"
   ],
   "validationProfile": {
-    "schemaVersion": 1,
+    "schemaVersion": 2,
+    "policyDefaults": {
+      "resources": {
+        "timeoutMs": 900000,
+        "maxOutputBytes": 10485760,
+        "maxMemoryMb": 2048,
+        "maxProcesses": 16
+      },
+      "network": {
+        "mode": "deny",
+        "invariantPolicyId": null,
+        "allowedDestinations": []
+      },
+      "environment": {
+        "allow": [],
+        "values": {}
+      },
+      "writablePaths": [
+        ".harness/state/resource-locks"
+      ]
+    },
     "commands": {
       "lint": [
-        {"cwd": "repo", "command": "node", "args": ["--check", "harness/cli.mjs"]}
+        {"cwd": "repo", "command": "node", "args": ["harness/tests/run-all.mjs", "--profile", "syntax"]}
       ],
       "typecheck": [
-        {"cwd": "repo", "command": "python", "args": ["-B", "-m", "py_compile", ".codex/hooks/pre_tool_use_policy.py", ".codex/hooks/post_tool_use_guard.py", ".codex/hooks/stop_guard.py"]}
+        {"cwd": "repo", "command": "node", "args": ["harness/tests/run-all.mjs", "--profile", "syntax"]}
       ],
       "testUnit": [
-        {"cwd": "repo", "command": "node", "args": ["harness/tests/run-all.mjs"]}
+        {"cwd": "repo", "command": "node", "args": ["harness/tests/run-all.mjs", "--profile", "unit"]}
       ],
       "testIntegration": [
-        {"cwd": "repo", "command": "node", "args": ["harness/tests/run-command.test.mjs"]}
+        {"cwd": "repo", "command": "node", "args": ["harness/tests/run-all.mjs", "--profile", "integration"]}
       ],
       "testContract": [
-        {"cwd": "repo", "command": "node", "args": ["harness/tests/hooks-policy.test.mjs"]}
+        {"cwd": "repo", "command": "node", "args": ["harness/tests/run-all.mjs", "--profile", "contract"]}
       ],
       "testE2E": [
-        {"cwd": "repo", "command": "node", "args": ["harness/tests/codex-process-e2e.test.mjs"]}
+        {"cwd": "repo", "command": "node", "args": ["harness/tests/run-all.mjs", "--profile", "e2e"]}
       ],
       "build": [
-        {"cwd": "repo", "command": "node", "args": ["harness/cli.mjs", "version"]}
+        {"cwd": "repo", "command": "node", "args": ["harness/tests/run-all.mjs", "--profile", "build"]}
       ],
       "generateClient": [
-        {"cwd": "repo", "command": "node", "args": ["--check", "harness/cli.mjs"]}
+        {"cwd": "repo", "command": "node", "args": ["harness/tests/run-all.mjs", "--profile", "syntax"]}
       ],
       "fullCI": [
-        {"cwd": "repo", "command": "node", "args": ["harness/tests/run-all.mjs"]}
+        {"cwd": "repo", "command": "node", "args": ["harness/tests/run-all.mjs", "--profile", "full-ci"]}
       ]
     }
   }

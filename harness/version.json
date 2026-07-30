@@ -1,8 +1,8 @@
 {
   "name": "scopelatch-agent-engineering-harness",
-  "version": "3.4.0",
-  "releasedAt": "2026-07-23",
-  "runManifestSchemaVersion": 4,
+  "version": "4.0.0",
+  "releasedAt": "2026-07-30",
+  "runManifestSchemaVersion": 6,
   "sourceAuthoritySchemaVersion": 2,
   "ruleReviewSchemaVersion": 1,
   "securityReportSchemaVersion": 2,

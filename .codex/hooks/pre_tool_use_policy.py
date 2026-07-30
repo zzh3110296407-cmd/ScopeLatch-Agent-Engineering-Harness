@@ -73,7 +73,15 @@ def emit(payload: dict) -> None:
 
 
 def run(cmd: list[str], cwd: str | None = None) -> subprocess.CompletedProcess:
-    return subprocess.run(cmd, cwd=cwd, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+    return subprocess.run(
+        cmd,
+        cwd=cwd,
+        encoding="utf-8",
+        errors="replace",
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
 
 
 def git_root() -> Path | None:
@@ -109,22 +117,88 @@ def session_fingerprint(value: str | None) -> str | None:
     return "sha256:" + hashlib.sha256(value.encode("utf-8")).hexdigest()
 
 
-def active_harness_binding(root: Path, payload: dict | None = None, allow_closed: bool = False) -> tuple[dict | None, str | None]:
-    latest = root / ".harness" / "state" / "latest-run.json"
-    if not latest.exists():
-        return None, "no active Harness plan"
-    try:
-        state = json.loads(latest.read_text(encoding="utf-8"))
-        run_dir = Path(state["runDir"])
-        if not run_dir.is_absolute():
-            run_dir = root / run_dir
-        run_dir = run_dir.resolve()
-    except Exception:
-        return None, "invalid latest-run state"
+def canonical_digest(value: dict, digest_field: str) -> str:
+    payload = dict(value)
+    payload.pop(digest_field, None)
+    encoded = json.dumps(
+        payload,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return "sha256:" + hashlib.sha256(encoded).hexdigest()
 
+
+def read_digest_valid_json(path: Path, digest_field: str) -> tuple[dict | None, str | None]:
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return None, f"missing {path.name}"
+    except Exception:
+        return None, f"unreadable {path.name}"
+    if not isinstance(value, dict) or value.get(digest_field) != canonical_digest(value, digest_field):
+        return None, f"digest mismatch in {path.name}"
+    return value, None
+
+
+def authoritative_state_candidates(
+    root: Path,
+    payload: dict,
+    allow_closed: bool,
+) -> tuple[list[tuple[dict, Path]], str | None]:
+    states_dir = root / ".harness" / "state" / "runs"
+    explicit_run_id = os.environ.get("HARNESS_RUN_ID")
+    session = session_identity(payload)
+    current_fingerprint = session_fingerprint(session)
+    if explicit_run_id:
+        files = [states_dir / f"{explicit_run_id}.json"]
+    elif states_dir.exists():
+        files = sorted(states_dir.glob("*.json"))
+    else:
+        files = []
+
+    valid_states: list[tuple[dict, Path]] = []
+    session_mismatches = 0
+    active_lifecycles = {"planned", "running", "blocked", "failed", "error"}
+    closed_lifecycles = {"passed", "aborted", "invalidated"}
+    for state_file in files:
+        state, error = read_digest_valid_json(state_file, "stateDigest")
+        if error or not state:
+            if explicit_run_id:
+                return [], error
+            continue
+        if state.get("runId") != state_file.stem:
+            if explicit_run_id:
+                return [], "authoritative run ID does not match its state file"
+            continue
+        lifecycle = state.get("lifecycle")
+        if lifecycle not in active_lifecycles and not (allow_closed and lifecycle in closed_lifecycles):
+            continue
+        if not current_fingerprint or state.get("ownerFingerprint") != current_fingerprint:
+            session_mismatches += 1
+            continue
+        valid_states.append((state, state_file))
+
+    if not valid_states and session_mismatches:
+        return [], "Harness plan belongs to a different Codex session"
+    if not valid_states:
+        return [], "no digest-valid authoritative Harness run for the current session"
+    if len(valid_states) > 1:
+        return [], "multiple authoritative Harness runs match; set explicit HARNESS_RUN_ID"
+    return valid_states, None
+
+
+def active_harness_binding(root: Path, payload: dict | None = None, allow_closed: bool = False) -> tuple[dict | None, str | None]:
+    payload = payload or {}
+    candidates, candidate_error = authoritative_state_candidates(root, payload, allow_closed)
+    if candidate_error:
+        return None, candidate_error
+    state, _state_file = candidates[0]
+    run_id = str(state["runId"])
     runs_root = (root / ".harness" / "runs").resolve()
-    if run_dir != runs_root and runs_root not in run_dir.parents:
-        return None, "active run is outside .harness/runs"
+    run_dir = (runs_root / run_id).resolve()
+    if run_dir.parent != runs_root:
+        return None, "authoritative run is outside .harness/runs"
 
     required = [
         "context-pack.md",
@@ -141,17 +215,17 @@ def active_harness_binding(root: Path, payload: dict | None = None, allow_closed
         return None, "run manifest is unreadable"
 
     binding = manifest.get("binding") or {}
-    if int(manifest.get("schemaVersion") or 0) < 4 or not binding:
-        return None, "legacy Harness plan cannot authorize writes; create a fresh plan"
+    if int(manifest.get("schemaVersion") or 0) < 6 or not binding:
+        return None, "legacy Harness plan has no authoritative atomic state"
     allowed_statuses = {"planned", "running", "repairing", "repair-prompt-ready"}
     if allow_closed:
         allowed_statuses.update({"guarded", "passed", "failed"})
     if manifest.get("status") not in allowed_statuses:
         return None, f"Harness plan is closed with status={manifest.get('status')}"
-    if state.get("runId") != manifest.get("runId"):
-        return None, "latest-run and manifest run IDs do not match"
-    if state.get("taskFingerprint") != binding.get("taskFingerprint"):
-        return None, "task fingerprint does not match the active run"
+    if run_id != manifest.get("runId"):
+        return None, "authoritative state and manifest run IDs do not match"
+    if state.get("workspaceDigest") != binding.get("workspaceDigest"):
+        return None, "authoritative workspace digest does not match the manifest"
 
     expected_run = os.environ.get("HARNESS_RUN_ID")
     expected_task = os.environ.get("HARNESS_TASK_FINGERPRINT")
@@ -161,13 +235,34 @@ def active_harness_binding(root: Path, payload: dict | None = None, allow_closed
         return None, "active run does not match HARNESS_TASK_FINGERPRINT"
 
     expected_session = binding.get("sessionFingerprint")
-    current_session = session_fingerprint(session_identity(payload or {}))
+    current_session = session_fingerprint(session_identity(payload))
     if binding.get("sessionBindingRequired", True) and not expected_session:
         return None, "Harness plan has no session binding"
     if expected_session and not current_session:
         return None, "current Codex session identity is unavailable"
     if expected_session and current_session != expected_session:
         return None, "Harness plan belongs to a different Codex session"
+
+    resource_id = binding.get("leaseResourceId")
+    if resource_id != f"run:{run_id}":
+        return None, "Harness lease resource is not bound to the run"
+    lease_name = hashlib.sha256(resource_id.encode("utf-8")).hexdigest() + ".json"
+    lease, lease_error = read_digest_valid_json(
+        root / ".harness" / "state" / "leases" / lease_name,
+        "leaseDigest",
+    )
+    if lease_error or not lease:
+        return None, lease_error or "Harness lease is missing"
+    if lease.get("resourceId") != resource_id or lease.get("runId") != run_id:
+        return None, "Harness lease identity does not match the run"
+    if session_fingerprint(str(lease.get("ownerId") or "")) != expected_session:
+        return None, "Harness lease owner does not match the manifest session"
+    if session_fingerprint(str(lease.get("nonce") or "")) != binding.get("leaseNonceFingerprint"):
+        return None, "Harness lease nonce does not match the manifest"
+    if state.get("nonceFingerprint") != binding.get("leaseNonceFingerprint"):
+        return None, "authoritative state nonce does not match the manifest"
+    if not allow_closed and lease.get("status") != "active":
+        return None, "Harness lease is not active"
 
     try:
         expires_at = datetime.fromisoformat(str(binding["expiresAt"]).replace("Z", "+00:00"))
@@ -177,6 +272,15 @@ def active_harness_binding(root: Path, payload: dict | None = None, allow_closed
             return None, "Harness plan has expired"
     except Exception:
         return None, "Harness plan expiry is invalid"
+    if not allow_closed:
+        try:
+            lease_expires_at = datetime.fromisoformat(str(lease["expiresAt"]).replace("Z", "+00:00"))
+            if lease_expires_at.tzinfo is None:
+                lease_expires_at = lease_expires_at.replace(tzinfo=timezone.utc)
+            if datetime.now(timezone.utc) > lease_expires_at:
+                return None, "Harness lease has expired"
+        except Exception:
+            return None, "Harness lease expiry is invalid"
 
     branch = git_value(root, "rev-parse", "--abbrev-ref", "HEAD")
     commit = git_value(root, "rev-parse", "HEAD")
@@ -184,7 +288,7 @@ def active_harness_binding(root: Path, payload: dict | None = None, allow_closed
         return None, "Harness plan belongs to a different branch"
     if binding.get("commit") != commit:
         return None, "Harness plan belongs to a different commit"
-    return {"state": state, "manifest": manifest, "run_dir": run_dir}, None
+    return {"state": state, "lease": lease, "manifest": manifest, "run_dir": run_dir}, None
 
 
 def tool_name(payload: dict) -> str:
@@ -261,8 +365,8 @@ def closeout_is_complete(binding: dict) -> tuple[bool, str | None]:
         post_guard = json.loads(post_guard_file.read_text(encoding="utf-8"))
     except Exception as exc:
         return False, f"unreadable closeout evidence: {exc}"
-    if validation.get("status") not in {"passed", "passed-or-skipped"}:
-        return False, f"validation status={validation.get('status')}"
+    if validation.get("outcome") != "PASS":
+        return False, f"validation outcome={validation.get('outcome')}"
     if post_guard.get("status") != "passed":
         return False, f"post-validation Guard status={post_guard.get('status')}"
     return True, None

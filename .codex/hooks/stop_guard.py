@@ -12,14 +12,15 @@ import subprocess
 import sys
 from pathlib import Path
 
-from pre_tool_use_policy import session_fingerprint, session_identity
+from pre_tool_use_policy import active_harness_binding
 
 
 def run(cmd: list[str], *, cwd: Path | None = None, timeout: int | None = None) -> subprocess.CompletedProcess:
     return subprocess.run(
         cmd,
         cwd=str(cwd) if cwd else None,
-        text=True,
+        encoding="utf-8",
+        errors="replace",
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         check=False,
@@ -65,31 +66,15 @@ def main() -> int:
     if status.returncode != 0 or not status.stdout.strip():
         return allow()
 
-    latest = root / ".harness" / "state" / "latest-run.json"
-    if not latest.exists():
-        return block("Worktree has changes but no harness run exists. Run `node harness/cli.mjs plan \"<task>\"`, inspect the plan, then continue.")
-
-    try:
-        state = json.loads(latest.read_text(encoding="utf-8"))
-        run_dir = Path(state["runDir"])
-    except Exception as exc:
-        return block(f"Worktree has changes but latest harness state cannot be read safely: {exc}. Run `node harness/cli.mjs plan \"<task>\"` again.")
-
-    if not run_dir.exists():
-        return block(f"Worktree has changes but latest harness run directory is missing: {run_dir}. Run `node harness/cli.mjs plan \"<task>\"` again.")
-
+    active, reason = active_harness_binding(root, payload, allow_closed=True)
+    if not active:
+        return block(
+            "Worktree has changes but no unique authoritative Harness run is available "
+            f"for this session: {reason}. Set HARNESS_RUN_ID or create a fresh plan."
+        )
+    run_dir = active["run_dir"]
+    manifest = active["manifest"]
     manifest_file = run_dir / "run-manifest.json"
-    try:
-        manifest = json.loads(manifest_file.read_text(encoding="utf-8"))
-    except Exception as exc:
-        return block(f"Harness manifest cannot be read safely: {exc}. Create a fresh plan.")
-    binding = manifest.get("binding") or {}
-    if int(manifest.get("schemaVersion") or 0) < 4:
-        return block("The latest Harness run uses a legacy lease. Create a fresh session-bound plan.")
-    expected_session = binding.get("sessionFingerprint")
-    current_session = session_fingerprint(session_identity(payload))
-    if binding.get("sessionBindingRequired", True) and (not expected_session or expected_session != current_session):
-        return block("The latest Harness run is not bound to this Codex session. Create and validate a plan in the current session.")
 
     if closeout_is_incomplete(run_dir, manifest) and auto_closeout_enabled(root):
         closeout_result = run_auto_closeout(root, run_dir)

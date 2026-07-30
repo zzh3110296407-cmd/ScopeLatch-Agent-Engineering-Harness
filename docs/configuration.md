@@ -47,25 +47,54 @@ ScopeLatch 按以下顺序读取配置，找到第一份可用文件后停止：
 
 ## 验证命令
 
-通用模板初始使用 `auto`。启用强制收尾前，应替换为项目真实命令：
+V4 命令必须使用闭合的“可执行文件 + 参数数组”契约，不能使用 shell 字符串。通用安装模板将所有能力初始化为 `false`；这表示尚未配置，并会失败关闭。启用强制收尾前，应替换为项目真实命令：
 
 ```json
 {
   "commands": {
-    "lint": "npm run lint",
-    "typecheck": "npm run typecheck",
-    "testUnit": "npm run test:unit",
-    "testIntegration": "npm run test:integration",
-    "testContract": "npm run test:contract",
-    "testE2E": "npm run test:e2e",
-    "build": "npm run build",
-    "generateClient": "none",
-    "fullCI": "npm run ci"
+    "lint": {
+      "schemaVersion": 1,
+      "executable": "npm",
+      "args": ["run", "lint"],
+      "policy": {
+        "network": { "mode": "deny", "allowedDestinations": [] },
+        "writablePaths": [".harness/state/resource-locks"]
+      }
+    },
+    "typecheck": {
+      "schemaVersion": 1,
+      "executable": "npm",
+      "args": ["run", "typecheck"]
+    },
+    "testUnit": {
+      "schemaVersion": 1,
+      "executable": "npm",
+      "args": ["run", "test:unit"]
+    },
+    "testIntegration": false,
+    "testContract": false,
+    "testE2E": false,
+    "build": false,
+    "generateClient": false,
+    "fullCI": false
   }
 }
 ```
 
-只有项目确实不存在某项能力时才能使用 `none`。ScopeLatch 会把不可用检查标记为不可用或跳过，不会伪装成通过。
+`false` 只能表示项目确实没有配置该能力；它不能满足要求该能力的高风险不变量。每个命令可以单独声明超时、输出、内存、进程数、网络、环境变量和可写路径。网络默认拒绝；需要联网的不变量必须显式列出允许目标。
+
+字符串命令、`shell: true`、隐式继承全部环境变量或无限制写入路径均不属于正式 V4 命令契约。
+
+需要为 `harness codex` 指定自定义 Codex 启动器时，使用
+`HARNESS_CODEX_COMMAND_JSON`，其值必须是 1–32 项的 JSON 字符串数组：
+
+```powershell
+$env:HARNESS_CODEX_COMMAND_JSON='["C:\\tools\\codex.exe"]'
+```
+
+兼容变量 `HARNESS_CODEX_COMMAND` 只表示一个可执行文件路径，不进行 shell
+拆词，也不接受附加参数或控制符。ScopeLatch 始终以 `shell: false` 执行该
+命令；需要前置参数时必须使用 JSON 数组。
 
 ## 变更预算
 

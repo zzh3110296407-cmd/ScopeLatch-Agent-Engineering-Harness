@@ -6,6 +6,7 @@ import { writePrReport } from './report.mjs';
 import { validatePlan } from './validator.mjs';
 import { readJson, writeJson } from './common.mjs';
 import { removeSessionLease } from './session-binding.mjs';
+import { readRunState, transitionRunState } from './v4/concurrent-state.mjs';
 
 export function closeRun({ root, runDir, config, guardOptions = {} }) {
   const guard = runDiffGuard({ root, runDir, config, options: guardOptions });
@@ -23,8 +24,10 @@ export function closeRun({ root, runDir, config, guardOptions = {} }) {
       options: guardOptions,
       resultFileName: 'post-validation-guard-result.json',
       artifactKey: 'postValidationGuardResult',
-      passedStatus: validation.result.status === 'failed' ? 'failed' : 'passed',
-      passedPhase: 'closeout-complete'
+      passedStatus: lifecycleStatusForOutcome(validation.result.outcome),
+      passedPhase: validation.result.outcome === 'PASS'
+        ? 'closeout-complete'
+        : `closeout-${validation.result.outcome.toLowerCase()}`
     });
     validationSideEffectFiles = diffWorkingTreeSnapshots(beforeValidation, readGuardedWorkingTreeSnapshot(root));
     if (validationSideEffectFiles.length) {
@@ -54,17 +57,28 @@ export function closeRun({ root, runDir, config, guardOptions = {} }) {
   }
 
   const report = writePrReport({ root, runDir });
-  const failed = guard.result.status === 'failed'
-    || validation?.result.status === 'failed'
-    || postValidationGuard?.result.status === 'failed'
-    || validationSideEffectFiles.length > 0;
-  const knowledge = failed ? recordFailureKnowledge({ root, runDir }) : null;
-  if (!failed) {
-    const manifest = readRunManifestSafe(runDir);
-    if (manifest?.runId) removeSessionLease({ root, config, runId: manifest.runId });
+  const status = closeoutStatus({
+    guardStatus: guard.result.status,
+    validationOutcome: validation?.result.outcome,
+    postValidationGuardStatus: postValidationGuard?.result.status,
+    validationSideEffectFiles
+  });
+  const knowledge = status === 'failed' ? recordFailureKnowledge({ root, runDir }) : null;
+  const manifest = readRunManifestSafe(runDir);
+  if (manifest?.runId) {
+    const stateDir = path.join(root, config.stateDir || '.harness/state');
+    if (readRunState({ stateDir, runId: manifest.runId })) {
+      transitionRunState({
+        stateDir,
+        runId: manifest.runId,
+        lifecycle: status,
+        reason: `closeout:${status}`
+      });
+    }
+    if (status !== 'failed') removeSessionLease({ root, config, runId: manifest.runId });
   }
   return {
-    status: failed ? 'failed' : 'passed',
+    status,
     guard,
     validation,
     postValidationGuard,
@@ -72,6 +86,30 @@ export function closeRun({ root, runDir, config, guardOptions = {} }) {
     report,
     knowledge
   };
+}
+
+function closeoutStatus({
+  guardStatus,
+  validationOutcome,
+  postValidationGuardStatus,
+  validationSideEffectFiles
+}) {
+  if (guardStatus === 'failed' || postValidationGuardStatus === 'failed' || validationSideEffectFiles.length) return 'failed';
+  if (!validationOutcome) return 'blocked';
+  if (validationOutcome === 'PASS') return 'passed';
+  if (['BLOCKED', 'ERROR', 'INVALIDATED'].includes(validationOutcome)) return validationOutcome.toLowerCase();
+  return 'failed';
+}
+
+function lifecycleStatusForOutcome(outcome) {
+  return {
+    PASS: 'passed',
+    FAIL: 'failed',
+    BLOCKED: 'blocked',
+    ERROR: 'error',
+    CANCELED: 'blocked',
+    INVALIDATED: 'invalidated'
+  }[outcome] || 'error';
 }
 
 function readRunManifestSafe(runDir) {

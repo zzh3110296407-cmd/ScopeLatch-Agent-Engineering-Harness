@@ -6,6 +6,7 @@ import { spawnSync } from 'node:child_process';
 import { closeRun } from '../lib/closeout.mjs';
 import { readChangesSinceRunBaseline } from '../lib/guard.mjs';
 import { buildRunManifest, writeRunManifest } from '../lib/manifest.mjs';
+import { normalizeCommandContract } from '../lib/v4/safe-executor.mjs';
 
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'harness-closeout-'));
 const runDir = path.join(root, '.harness', 'runs', 'closeout-run');
@@ -36,7 +37,7 @@ const validationPlan = {
     label: 'Lint',
     required: true,
     available: true,
-    command: 'node -e "console.log(\'CLOSEOUT_PASS\')"'
+    command: normalizeCommandContract('node -e "console.log(\'CLOSEOUT_PASS\')"')
   }]
 };
 writeJson('context-pack.json', { mustRead: ['src/app.js'] });
@@ -70,7 +71,7 @@ const result = closeRun({
 
 assert.equal(result.status, 'passed');
 assert.equal(result.guard.result.status, 'passed');
-assert.equal(result.validation.result.status, 'passed');
+assert.equal(result.validation.result.outcome, 'PASS');
 assert.equal(result.postValidationGuard.result.status, 'passed');
 assert.equal(fs.existsSync(path.join(runDir, 'pr-report.md')), true);
 assert.equal(fs.existsSync(path.join(runDir, 'metrics.json')), true);

@@ -2,6 +2,7 @@ import path from 'node:path';
 import { readJson, exists, normalizePath } from './common.mjs';
 import { detectPackageManager, readPackageJson, resolveScriptCommand } from './repo.mjs';
 import { discoverSourceAuthority, interpolateCanonicalSource } from './source-authority.mjs';
+import { normalizeCommandContract } from './v4/safe-executor.mjs';
 
 const requiredExcludePaths = [
   'node_modules',
@@ -91,14 +92,14 @@ const defaultConfig = {
       outsidePenalty: -120
     },
     sourcePriority: {
-      autoDetectCanonicalSource: true,
-      canonicalSourceRoot: null,
+      autoDetectCanonicalSource: false,
+      canonicalSourceRoot: '.',
       phaseSearchRoot: 'versions',
-      canonicalMarkers: ['app/backend', 'app/frontend'],
+      canonicalMarkers: [],
       authorityManifestPath: '.harness/source-authority.json',
       requireAuthorityManifest: false,
-      activeSourceRoots: [],
-      referenceSourceRoots: [],
+      activeSourceRoots: ['src/**', 'app/**', 'packages/**', 'tests/**', 'docs/**'],
+      referenceSourceRoots: ['examples/**', 'docs/**'],
       historicalPathPatterns: ['**/archive/**', '**/archives/**'],
       generatedPathPatterns: ['**/generated/**', '**/*_report.json', '**/*validation-report*'],
       activeBonus: 40,
@@ -321,17 +322,15 @@ export function buildConfigHealth({ root, config }) {
     const configured = config.commands?.[id];
     const command = resolveScriptCommand(root, config.packageManager, pkg, configured, candidates);
     const explicit = configured !== undefined && configured !== 'auto';
-    const disabled = configured === 'none' || configured === false;
     return {
       id,
       configured: configured === undefined ? null : configured,
       explicit,
-      disabled,
       available: Boolean(command),
       command
     };
   });
-  const unresolvedCommands = commandResults.filter((c) => !c.available && !c.disabled);
+  const unresolvedCommands = commandResults.filter((c) => !c.available);
   const autoCommands = commandResults.filter((c) => !c.explicit);
   addCheck(
     checks,
@@ -339,9 +338,9 @@ export function buildConfigHealth({ root, config }) {
     unresolvedCommands.length === 0 && autoCommands.length === 0,
     unresolvedCommands.length || autoCommands.length
       ? `Unresolved commands: ${unresolvedCommands.map((c) => c.id).join(', ') || 'none'}; auto commands: ${autoCommands.map((c) => c.id).join(', ') || 'none'}`
-      : 'All primary validation commands are explicit and either resolvable or intentionally disabled.'
+      : 'All primary validation commands are explicit and resolvable.'
   );
-  const phaseBoundCommands = commandResults.filter((item) => /(?:verify_|run_)?phase\d|phase-\d/i.test(item.command || ''));
+  const phaseBoundCommands = commandResults.filter((item) => /(?:verify_|run_)?phase\d|phase-\d/i.test(commandText(item.command)));
   addCheck(
     checks,
     'phase-neutral-validation-entrypoints',
@@ -352,7 +351,7 @@ export function buildConfigHealth({ root, config }) {
   );
   const authorityCapabilities = config.sourceAuthority?.validationProfile?.commands || {};
   const missingCapabilities = commandResults
-    .filter((item) => item.available && /harness[\\/]validators[\\/]run\.mjs\s+/i.test(item.command || ''))
+    .filter((item) => item.available && /harness[\\/]validators[\\/]run\.mjs(?:\s+|$)/i.test(commandText(item.command)))
     .map((item) => item.id)
     .filter((id) => !authorityCapabilities[id]);
   addCheck(
@@ -444,7 +443,21 @@ function requireOneOf(value, allowed, name, errors) {
 function requireCommandValue(value, name, errors) {
   if (typeof value === 'string') return;
   if (value === false) return;
-  errors.push(`${name} must be a string or false.`);
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    errors.push(`${name} must be a valid executable-and-arguments command contract or false.`);
+    return;
+  }
+  try {
+    normalizeCommandContract(value);
+  } catch (error) {
+    errors.push(`${name} must be a valid executable-and-arguments command contract or false (${error.code || error.message}).`);
+  }
+}
+
+function commandText(value) {
+  if (!value) return '';
+  if (typeof value === 'string') return value;
+  return [value.executable, ...(value.args || [])].join(' ');
 }
 
 function addCheck(checks, id, passed, message) {

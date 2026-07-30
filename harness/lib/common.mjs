@@ -41,29 +41,6 @@ export function writeJson(file, data) {
   writeText(file, `${JSON.stringify(data, null, 2)}\n`);
 }
 
-export function run(command, options = {}) {
-  const start = Date.now();
-  const res = spawnSync(command, {
-    cwd: options.cwd || process.cwd(),
-    input: options.input,
-    shell: true,
-    encoding: 'utf8',
-    timeout: options.timeoutMs || 10 * 60 * 1000,
-    maxBuffer: options.maxBuffer || 20 * 1024 * 1024,
-    env: { ...process.env, ...(options.env || {}) }
-  });
-  return {
-    command,
-    cwd: options.cwd || process.cwd(),
-    exitCode: typeof res.status === 'number' ? res.status : 1,
-    signal: res.signal || null,
-    stdout: res.stdout || '',
-    stderr: res.stderr || '',
-    durationMs: Date.now() - start,
-    error: res.error ? String(res.error.message || res.error) : null
-  };
-}
-
 export function runFile(command, args = [], options = {}) {
   const start = Date.now();
   const res = spawnSync(command, args, {

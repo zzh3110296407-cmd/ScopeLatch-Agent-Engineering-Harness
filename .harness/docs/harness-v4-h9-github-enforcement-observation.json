@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "artifactType": "GitHubEnforcementObservation",
+  "contractVersion": "harness-github-enforcement-observation-v1.0.0",
+  "provider": "github",
+  "repository": "zzh3110296407-cmd/ScopeLatch-Agent-Engineering-Harness",
+  "protectedBranch": "main",
+  "observedAt": null,
+  "networkBoundary": {
+    "allowedProvider": "github",
+    "apiHost": "api.github.com",
+    "networkUsed": false,
+    "otherNetworkUsed": false
+  },
+  "branchProtection": {
+    "endpointClass": "repos.branches.protection",
+    "httpStatus": null,
+    "available": false,
+    "requestId": null,
+    "reasonCode": "NOT_OBSERVED_FOR_THIS_REPOSITORY",
+    "safeMessage": "No GitHub branch-protection observation has been collected for this repository."
+  },
+  "rulesets": {
+    "endpointClass": "repos.rulesets.list",
+    "httpStatus": null,
+    "available": false,
+    "requestId": null,
+    "reasonCode": "NOT_OBSERVED_FOR_THIS_REPOSITORY",
+    "safeMessage": "No GitHub ruleset observation has been collected for this repository."
+  },
+  "requiredCheck": {
+    "name": "Harness v4 Formal Attestation",
+    "installed": false,
+    "mode": null
+  },
+  "formalActivationAllowed": false,
+  "reasonCode": "H9_EXTERNAL_ENFORCEMENT_NOT_OBSERVED"
+}

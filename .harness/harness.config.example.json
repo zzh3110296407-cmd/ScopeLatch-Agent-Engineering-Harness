@@ -87,15 +87,15 @@
     "buildSystemPatterns": ["package.json", "pnpm-lock.yaml", "yarn.lock", "package-lock.json", "turbo.json", "nx.json", "vite.config.*", "webpack.config.*", "tsconfig*.json", ".github/workflows/**", ".codex/**", "harness/**", ".harness/harness.config.json"]
   },
   "commands": {
-    "lint": "node harness/validators/run.mjs lint",
-    "typecheck": "node harness/validators/run.mjs typecheck",
-    "test": "none",
-    "testUnit": "node harness/validators/run.mjs testUnit",
-    "testIntegration": "node harness/validators/run.mjs testIntegration",
-    "testContract": "node harness/validators/run.mjs testContract",
-    "testE2E": "node harness/validators/run.mjs testE2E",
-    "build": "node harness/validators/run.mjs build",
-    "generateClient": "node harness/validators/run.mjs generateClient",
-    "fullCI": "node harness/validators/run.mjs fullCI"
+    "lint": { "schemaVersion": 1, "executable": "node", "args": ["harness/tests/run-all.mjs", "--profile", "syntax"], "policy": { "writablePaths": [".harness/state/resource-locks"] } },
+    "typecheck": { "schemaVersion": 1, "executable": "node", "args": ["harness/tests/run-all.mjs", "--profile", "syntax"], "policy": { "writablePaths": [".harness/state/resource-locks"] } },
+    "test": false,
+    "testUnit": { "schemaVersion": 1, "executable": "node", "args": ["harness/tests/run-all.mjs", "--profile", "unit"], "policy": { "writablePaths": [".harness/state/resource-locks"] } },
+    "testIntegration": { "schemaVersion": 1, "executable": "node", "args": ["harness/tests/run-all.mjs", "--profile", "integration"], "policy": { "writablePaths": [".harness/state/resource-locks"] } },
+    "testContract": { "schemaVersion": 1, "executable": "node", "args": ["harness/tests/run-all.mjs", "--profile", "contract"], "policy": { "writablePaths": [".harness/state/resource-locks"] } },
+    "testE2E": { "schemaVersion": 1, "executable": "node", "args": ["harness/tests/run-all.mjs", "--profile", "e2e"], "policy": { "writablePaths": [".harness/state/resource-locks"] } },
+    "build": { "schemaVersion": 1, "executable": "node", "args": ["harness/tests/run-all.mjs", "--profile", "build"], "policy": { "writablePaths": [".harness/state/resource-locks"] } },
+    "generateClient": { "schemaVersion": 1, "executable": "node", "args": ["harness/tests/run-all.mjs", "--profile", "syntax"], "policy": { "writablePaths": [".harness/state/resource-locks"] } },
+    "fullCI": { "schemaVersion": 1, "executable": "node", "args": ["harness/tests/run-all.mjs", "--profile", "full-ci"], "policy": { "writablePaths": [".harness/state/resource-locks"] } }
   }
 }

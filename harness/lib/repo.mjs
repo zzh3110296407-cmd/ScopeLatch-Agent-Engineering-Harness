@@ -67,7 +67,11 @@ export function scriptExists(pkg, script) {
 
 export function resolveScriptCommand(root, pm, pkg, configuredValue, candidates) {
   if (!configuredValue || configuredValue === 'none' || configuredValue === false) return null;
-  if (configuredValue && configuredValue !== 'auto') return String(configuredValue);
+  if (configuredValue && configuredValue !== 'auto') {
+    return typeof configuredValue === 'string'
+      ? configuredValue
+      : JSON.parse(JSON.stringify(configuredValue));
+  }
   for (const script of candidates) {
     if (scriptExists(pkg, script)) return packageRunCommand(pm, script);
   }

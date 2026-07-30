@@ -14,19 +14,24 @@ if (args.includes('--help') || args.includes('-h')) {
 const targetArg = optionValue('--target') || args.find((value) => !value.startsWith('-'));
 if (!targetArg) fail('Missing target repository. Use --target <path>.');
 
-const targetRoot = path.resolve(targetArg);
+const requestedTargetRoot = path.resolve(targetArg);
 const force = args.includes('--force');
 const enableHooks = args.includes('--enable-hooks');
 
-if (!fs.existsSync(targetRoot) || !fs.statSync(targetRoot).isDirectory()) {
-  fail(`Target directory does not exist: ${targetRoot}`);
+if (!fs.existsSync(requestedTargetRoot) || !fs.statSync(requestedTargetRoot).isDirectory()) {
+  fail(`Target directory does not exist: ${requestedTargetRoot}`);
 }
+const targetRoot = fs.realpathSync(requestedTargetRoot);
 if (samePath(targetRoot, packageRoot)) fail('Target must be a different repository.');
 
 const results = [];
 copyFile('harness/cli.mjs', 'harness/cli.mjs');
 copyFile('harness/version.json', 'harness/version.json');
+copyTree('harness/auditor', 'harness/auditor');
+copyTree('harness/contracts', 'harness/contracts');
+copyTree('harness/executor', 'harness/executor');
 copyTree('harness/lib', 'harness/lib');
+copyTree('harness/qualification', 'harness/qualification');
 copyTree('harness/validators', 'harness/validators');
 copyTree('harness/sandbox', 'harness/sandbox');
 copyTree('.codex/hooks', '.codex/hooks');
@@ -59,6 +64,7 @@ if (agentsTarget !== 'AGENTS.md') {
 function copyTree(sourceRel, targetRel) {
   const source = path.join(packageRoot, sourceRel);
   const target = path.join(targetRoot, targetRel);
+  assertSafeDestination(target);
   if (fs.existsSync(target) && !force) {
     results.push({ path: targetRel, status: 'skipped' });
     return;
@@ -69,6 +75,7 @@ function copyTree(sourceRel, targetRel) {
 }
 
 function copyDirectory(source, target) {
+  assertSafeDestination(target);
   fs.mkdirSync(target, { recursive: true });
   for (const entry of fs.readdirSync(source, { withFileTypes: true })) {
     if (isTransientPythonArtifact(entry)) continue;
@@ -88,6 +95,7 @@ function isTransientPythonArtifact(entry) {
 function copyFile(sourceRel, targetRel) {
   const source = path.join(packageRoot, sourceRel);
   const target = path.join(targetRoot, targetRel);
+  assertSafeDestination(target);
   if (fs.existsSync(target) && !force) {
     results.push({ path: targetRel, status: 'skipped' });
     return;
@@ -95,6 +103,21 @@ function copyFile(sourceRel, targetRel) {
   fs.mkdirSync(path.dirname(target), { recursive: true });
   fs.copyFileSync(source, target);
   results.push({ path: targetRel, status: 'installed' });
+}
+
+function assertSafeDestination(target) {
+  const relative = path.relative(targetRoot, path.resolve(target));
+  if (relative === '..' || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) {
+    fail('Installer destination escapes the target repository.');
+  }
+  let cursor = targetRoot;
+  for (const segment of relative.split(path.sep).filter(Boolean)) {
+    cursor = path.join(cursor, segment);
+    if (!fs.existsSync(cursor)) continue;
+    if (fs.lstatSync(cursor).isSymbolicLink()) {
+      fail(`Installer destination contains a symbolic link or junction: ${path.relative(targetRoot, cursor)}`);
+    }
+  }
 }
 
 function optionValue(name) {
@@ -123,5 +146,8 @@ Options:
   --force           Replace previously installed Harness files.
   --help            Show this help.
 
-The installer copies runtime files, not this package's self-tests or CI workflow. It never deletes files. Without --force, existing destinations are preserved.`);
+The installer copies the V4 runtime, formal contracts, Auditor, Safe Executor,
+qualification tools and Codex hooks. It does not copy this package's self-tests
+or CI workflows. It never deletes files. Without --force, existing destinations
+are preserved.`);
 }

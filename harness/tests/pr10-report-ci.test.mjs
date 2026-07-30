@@ -52,7 +52,9 @@ assert.deepEqual(metrics.topFailureSignatures, [failureSignature(validationResul
 
 const firstKnowledge = recordFailureKnowledge({ root, runDir });
 assert.equal(firstKnowledge.count, 1);
-assert.ok(fs.existsSync(path.join(root, '.harness', 'knowledge', 'failures.jsonl')));
+const runtimeKnowledgeDir = path.join(root, '.harness', 'state', 'failure-knowledge');
+assert.ok(fs.existsSync(path.join(runtimeKnowledgeDir, 'failures.jsonl')));
+assert.equal(fs.existsSync(path.join(root, '.harness', 'knowledge', 'failures.jsonl')), false);
 
 const duplicateKnowledge = recordFailureKnowledge({ root, runDir });
 assert.equal(duplicateKnowledge.status, 'already-recorded');
@@ -62,10 +64,9 @@ const thirdRunDir = cloneFailureRun(root, runDir, 'report-run-3');
 recordFailureKnowledge({ root, runDir: secondRunDir });
 const thirdKnowledge = recordFailureKnowledge({ root, runDir: thirdRunDir });
 assert.equal(thirdKnowledge.count, 3);
-assert.ok(fs.existsSync(path.join(root, '.harness', 'knowledge', 'rule-candidates.yaml')));
-assert.ok(fs.existsSync(path.join(root, '.harness', 'rules.yaml')));
-assert.doesNotMatch(fs.readFileSync(path.join(root, '.harness', 'rules.yaml'), 'utf8'), /backend route\/schema/);
-const candidateText = fs.readFileSync(path.join(root, '.harness', 'knowledge', 'rule-candidates.yaml'), 'utf8');
+assert.ok(fs.existsSync(path.join(runtimeKnowledgeDir, 'rule-candidates.yaml')));
+assert.equal(fs.existsSync(path.join(root, '.harness', 'rules.yaml')), false);
+const candidateText = fs.readFileSync(path.join(runtimeKnowledgeDir, 'rule-candidates.yaml'), 'utf8');
 const candidateId = candidateText.match(/id: "([^"]+)"/)?.[1];
 assert.ok(candidateId);
 const promotion = promoteRuleCandidate({
@@ -88,6 +89,22 @@ const backfill = backfillFailureKnowledge({ root });
 assert.equal(backfill.scanned, 3);
 assert.equal(backfill.recorded, 0);
 assert.equal(backfill.existing, 3);
+
+const readOnlyRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'harness-pr10-read-only-'));
+const readOnlyRunDir = path.join(readOnlyRoot, '.harness', 'runs', 'read-only-run');
+fs.mkdirSync(readOnlyRunDir, { recursive: true });
+writeReportRun(readOnlyRoot, readOnlyRunDir);
+const readOnlyKnowledge = recordFailureKnowledge({
+  root: readOnlyRoot,
+  runDir: readOnlyRunDir,
+  mode: 'read-only'
+});
+assert.deepEqual(readOnlyKnowledge, {
+  status: 'skipped',
+  reason: 'knowledge-read-only',
+  count: 0
+});
+assert.equal(fs.existsSync(path.join(readOnlyRoot, '.harness', 'state', 'failure-knowledge')), false);
 
 const ciRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'harness-pr10-ci-'));
 writeCiProject(ciRoot);
@@ -118,11 +135,14 @@ const dirtyCi = spawnSync(process.execPath, [cliPath, 'ci', '--base', 'HEAD'], {
 });
 assert.equal(dirtyCi.status, 1, `${dirtyCi.stdout}\n${dirtyCi.stderr}`);
 assert.match(dirtyCi.stdout, /Post-validation guard/);
-assert.match(dirtyCi.stdout, /CI status: failed/);
+assert.match(dirtyCi.stdout, /Validation outcome: BLOCKED/);
+assert.match(dirtyCi.stdout, /CI status: blocked/);
+assert.equal(fs.readFileSync(path.join(dirtyCiRoot, 'tracked.txt'), 'utf8'), 'clean\n');
 
-fs.rmSync(root, { recursive: true, force: true });
-fs.rmSync(ciRoot, { recursive: true, force: true });
-fs.rmSync(dirtyCiRoot, { recursive: true, force: true });
+removeTree(root);
+removeTree(readOnlyRoot);
+removeTree(ciRoot);
+removeTree(dirtyCiRoot);
 
 console.log('PR10_REPORT_CI_TEST_PASS');
 
@@ -222,7 +242,7 @@ function validationResultFixture() {
 
 function cloneFailureRun(projectRoot, sourceRunDir, name) {
   const target = path.join(projectRoot, '.harness', 'runs', name);
-  fs.cpSync(sourceRunDir, target, { recursive: true });
+  copyTree(sourceRunDir, target);
   const manifestPath = path.join(target, 'run-manifest.json');
   const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
   manifest.runId = name;
@@ -231,6 +251,18 @@ function cloneFailureRun(projectRoot, sourceRunDir, name) {
   }
   fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
   return target;
+}
+
+function copyTree(source, target) {
+  const stat = fs.lstatSync(source);
+  if (stat.isDirectory() && !stat.isSymbolicLink()) {
+    fs.mkdirSync(target, { recursive: true });
+    for (const entry of fs.readdirSync(source)) {
+      copyTree(path.join(source, entry), path.join(target, entry));
+    }
+    return;
+  }
+  fs.copyFileSync(source, target);
 }
 
 function writeCiProject(projectRoot) {
@@ -252,6 +284,12 @@ function writeCiProject(projectRoot) {
       fullCI: pass
     }
   }, null, 2)}\n`, 'utf8');
+  copyInvariantCatalog(projectRoot);
+  runGit(projectRoot, ['init']);
+  runGit(projectRoot, ['config', 'user.email', 'harness@example.invalid']);
+  runGit(projectRoot, ['config', 'user.name', 'Harness Test']);
+  runGit(projectRoot, ['add', '.']);
+  runGit(projectRoot, ['commit', '-m', 'initial']);
 }
 
 function writeDirtyCiProject(projectRoot) {
@@ -275,6 +313,7 @@ function writeDirtyCiProject(projectRoot) {
       fullCI: pass
     }
   }, null, 2)}\n`, 'utf8');
+  copyInvariantCatalog(projectRoot);
 
   runGit(projectRoot, ['init']);
   runGit(projectRoot, ['config', 'user.email', 'harness@example.invalid']);
@@ -286,4 +325,22 @@ function writeDirtyCiProject(projectRoot) {
 function runGit(cwd, args) {
   const res = spawnSync('git', args, { cwd, encoding: 'utf8' });
   assert.equal(res.status, 0, `${res.stdout}\n${res.stderr}`);
+}
+
+function copyInvariantCatalog(root) {
+  const target = path.join(root, 'harness', 'contracts', 'v4', 'invariant-catalog.json');
+  fs.mkdirSync(path.dirname(target), { recursive: true });
+  fs.copyFileSync(path.join(harnessRoot, 'contracts', 'v4', 'invariant-catalog.json'), target);
+}
+
+function removeTree(target) {
+  if (!fs.existsSync(target)) return;
+  const stat = fs.lstatSync(target);
+  if (stat.isDirectory() && !stat.isSymbolicLink()) {
+    for (const entry of fs.readdirSync(target)) removeTree(path.join(target, entry));
+    fs.rmdirSync(target);
+  } else {
+    fs.unlinkSync(target);
+  }
+  assert.equal(fs.existsSync(target), false, `cleanup did not remove ${target}`);
 }

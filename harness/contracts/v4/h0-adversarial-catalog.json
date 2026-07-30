@@ -1,0 +1,168 @@
+{
+  "schemaVersion": 1,
+  "catalogId": "harness-v4-h0-adversarial-catalog",
+  "contractVersion": "harness-trust-v4.0.0",
+  "purpose": "A versioned catalog of false-pass, identity, tamper, concurrency, execution, and confidentiality probes that Harness v4 must defeat.",
+  "cases": [
+    {
+      "id": "empty-plan-blocked",
+      "category": "outcome",
+      "milestone": "H1",
+      "executableInH0": true,
+      "expectedV4Outcome": "BLOCKED",
+      "assertion": "A plan with zero applicable required checks cannot produce any pass verdict."
+    },
+    {
+      "id": "required-unavailable-blocked",
+      "category": "outcome",
+      "milestone": "H1",
+      "executableInH0": true,
+      "expectedV4Outcome": "BLOCKED",
+      "assertion": "An applicable required check without an executable capability blocks the run."
+    },
+    {
+      "id": "optional-failure-not-formal-pass",
+      "category": "outcome",
+      "milestone": "H1",
+      "executableInH0": true,
+      "expectedV4Outcome": "FAIL",
+      "assertion": "An executed assertion that fails cannot be hidden behind an optional flag and promoted to formal success."
+    },
+    {
+      "id": "missing-required-graph-node-blocked",
+      "category": "coverage",
+      "milestone": "H1",
+      "executableInH0": true,
+      "expectedV4Outcome": "BLOCKED",
+      "assertion": "Every applicable required command must have exactly one executable graph node and result."
+    },
+    {
+      "id": "required-sync-checks-compiled",
+      "category": "coverage",
+      "milestone": "H1",
+      "executableInH0": true,
+      "expectedV4Outcome": "PASS",
+      "assertion": "Every validationChecks entry of an applicable required synchronization is compiled into a required execution node."
+    },
+    {
+      "id": "git-status-error-blocked",
+      "category": "candidate",
+      "milestone": "H3",
+      "executableInH0": true,
+      "expectedV4Outcome": "BLOCKED",
+      "assertion": "A Git observation error is never interpreted as an empty change set."
+    },
+    {
+      "id": "invalid-base-ref-blocked",
+      "category": "candidate",
+      "milestone": "H3",
+      "executableInH0": false,
+      "expectedV4Outcome": "BLOCKED",
+      "assertion": "An unresolved or ambiguous base reference blocks candidate construction."
+    },
+    {
+      "id": "staged-index-content-bound",
+      "category": "candidate",
+      "milestone": "H3",
+      "executableInH0": true,
+      "expectedV4Outcome": "PASS",
+      "assertion": "Changing only an index blob changes candidate identity even when worktree bytes and porcelain status remain the same."
+    },
+    {
+      "id": "candidate-commit-binding-enforced",
+      "category": "candidate",
+      "milestone": "H3",
+      "executableInH0": true,
+      "expectedV4Outcome": "INVALIDATED",
+      "assertion": "A run bound to one commit or tree cannot validate and attest a later commit or tree."
+    },
+    {
+      "id": "plan-digest-tamper-detected",
+      "category": "tamper",
+      "milestone": "H2",
+      "executableInH0": true,
+      "expectedV4Outcome": "INVALIDATED",
+      "assertion": "Changing an execution plan after run binding invalidates the run before execution."
+    },
+    {
+      "id": "impact-scope-tamper-detected",
+      "category": "tamper",
+      "milestone": "H2",
+      "executableInH0": false,
+      "expectedV4Outcome": "INVALIDATED",
+      "assertion": "Changing the impact or allowed-scope artifact after binding invalidates the run."
+    },
+    {
+      "id": "manifest-baseline-self-tamper-detected",
+      "category": "tamper",
+      "milestone": "H2",
+      "executableInH0": false,
+      "expectedV4Outcome": "INVALIDATED",
+      "assertion": "Changing a baseline or manifest field without updating a trusted parent digest is detected."
+    },
+    {
+      "id": "source-authority-drift-invalidates",
+      "category": "tamper",
+      "milestone": "H2",
+      "executableInH0": false,
+      "expectedV4Outcome": "INVALIDATED",
+      "assertion": "Source-authority or policy drift between planning and audit invalidates evidence."
+    },
+    {
+      "id": "unicode-git-paths-observed",
+      "category": "candidate",
+      "milestone": "H3",
+      "executableInH0": false,
+      "expectedV4Outcome": "PASS",
+      "assertion": "Unicode, whitespace, rename and special Git paths are parsed losslessly using NUL-delimited output."
+    },
+    {
+      "id": "concurrent-run-identity-unique",
+      "category": "concurrency",
+      "milestone": "H6",
+      "executableInH0": false,
+      "expectedV4Outcome": "PASS",
+      "assertion": "Concurrent run creation cannot collide or overwrite another run identity."
+    },
+    {
+      "id": "lease-ownership-exclusive",
+      "category": "concurrency",
+      "milestone": "H6",
+      "executableInH0": false,
+      "expectedV4Outcome": "BLOCKED",
+      "assertion": "Only one live owner with the matching nonce can mutate a leased run."
+    },
+    {
+      "id": "cross-run-artifact-rejected",
+      "category": "concurrency",
+      "milestone": "H2",
+      "executableInH0": false,
+      "expectedV4Outcome": "INVALIDATED",
+      "assertion": "Evidence from another run or candidate cannot satisfy a result dependency."
+    },
+    {
+      "id": "validation-side-effect-blocked",
+      "category": "execution",
+      "milestone": "H7",
+      "executableInH0": false,
+      "expectedV4Outcome": "FAIL",
+      "assertion": "A validator that changes candidate source bytes fails even when its command exits zero."
+    },
+    {
+      "id": "output-secrets-redacted",
+      "category": "confidentiality",
+      "milestone": "H7",
+      "executableInH0": false,
+      "expectedV4Outcome": "PASS",
+      "assertion": "Persisted stdout, stderr, diagnostics and reports contain no credential or secret material."
+    },
+    {
+      "id": "dirty-worktree-not-formal-eligible",
+      "category": "candidate",
+      "milestone": "H3",
+      "executableInH0": false,
+      "expectedV4Outcome": "BLOCKED",
+      "assertion": "A mutable unattributed worktree can produce provisional feedback only."
+    }
+  ]
+}

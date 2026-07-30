@@ -71,6 +71,40 @@ const manifest = readJson(path.join(runDir, 'run-manifest.json'));
 assert.equal(manifest.repair.status, 'blocked');
 assert.equal(manifest.repair.reason, 'repeated-failure-signature');
 
+const blockedRunDir = path.join(root, '.harness', 'runs', 'blocked-run');
+fs.mkdirSync(blockedRunDir, { recursive: true });
+fs.writeFileSync(path.join(blockedRunDir, 'validation-result.json'), `${JSON.stringify({
+  outcome: 'BLOCKED',
+  results: []
+}, null, 2)}\n`, 'utf8');
+fs.writeFileSync(path.join(blockedRunDir, 'run-manifest.json'), `${JSON.stringify({
+  schemaVersion: 4,
+  runId: 'blocked-run',
+  status: 'blocked',
+  phase: 'validation-blocked',
+  repo: { root },
+  artifacts: {},
+  validation: { resultOutcome: 'BLOCKED' }
+}, null, 2)}\n`, 'utf8');
+
+const blockedRepair = repairRun({
+  root,
+  runDir: blockedRunDir,
+  config: { changeBudget: { maxRepairRounds: 3 } },
+  options: { promptOnly: true }
+});
+assert.equal(blockedRepair.result.status, 'blocked');
+assert.equal(blockedRepair.result.reason, 'validation-blocked-is-not-repairable');
+
+const blockedCli = spawnSync(process.execPath, [cliPath, 'repair', '--run', blockedRunDir, '--prompt-only'], {
+  cwd: root,
+  encoding: 'utf8',
+  timeout: 120000,
+  maxBuffer: 20 * 1024 * 1024
+});
+assert.notEqual(blockedCli.status, 0);
+assert.match(blockedCli.stdout, /Repair status: blocked/);
+
 fs.rmSync(root, { recursive: true, force: true });
 
 console.log('REPAIR_LOOP_TEST_PASS');
@@ -124,7 +158,7 @@ function writeFailedRun(projectRoot, targetRunDir) {
     repo: { root: projectRoot },
     risk: { level: 'L3', score: 5, signals: ['build-system-change'] },
     synchronizations: { requiredCount: 0, domains: [] },
-    validation: { resultStatus: 'failed', failedCount: 1 },
+    validation: { resultOutcome: 'FAIL', failedCount: 1 },
     artifacts: {
       contextPack: '.harness/runs/failed-run/context-pack.md',
       impactReport: '.harness/runs/failed-run/impact-report.json',
@@ -139,7 +173,7 @@ function failedValidationResult() {
   return {
     generatedAt: '2026-07-06T00:00:00.000Z',
     planPath: '.harness/runs/failed-run/validation-plan.json',
-    status: 'failed',
+    outcome: 'FAIL',
     results: [
       {
         id: 'lint',
@@ -148,7 +182,7 @@ function failedValidationResult() {
         tier: 'tier1-static',
         command: 'node -e "process.exit(1)"',
         required: true,
-        status: 'failed',
+        outcome: 'FAIL',
         exitCode: 1,
         durationMs: 10,
         stdout: 'RAW_STDOUT_SHOULD_NOT_BE_IN_PROMPT',

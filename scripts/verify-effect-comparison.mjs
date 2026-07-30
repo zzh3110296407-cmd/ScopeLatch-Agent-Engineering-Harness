@@ -33,10 +33,18 @@ if (privateSource) {
 }
 
 function measureStage(repo, ref) {
-  const files = git(repo, ['ls-tree', '-r', '--name-only', ref]).split(/\r?\n/).filter(Boolean);
+  const worktreeMode = ref === 'WORKTREE';
+  const files = worktreeMode
+    ? walkFiles(repo).map((file) => path.relative(repo, file).replaceAll('\\', '/'))
+    : git(repo, ['ls-tree', '-r', '--name-only', ref]).split(/\r?\n/).filter(Boolean);
   const testFiles = files.filter((file) => /^harness\/tests\/.+\.test\.mjs$/.test(file));
   const engineModules = files.filter((file) => /^harness\/lib\/.+\.mjs$/.test(file));
-  const content = (file) => files.includes(file) ? git(repo, ['show', `${ref}:${file}`]) : '';
+  const content = (file) => {
+    if (!files.includes(file)) return '';
+    return worktreeMode
+      ? fs.readFileSync(path.join(repo, file), 'utf8')
+      : git(repo, ['show', `${ref}:${file}`]);
+  };
   const preTool = content('.codex/hooks/pre_tool_use_policy.py');
   const stopHook = content('.codex/hooks/stop_guard.py');
   const impactAnalyzer = content('harness/lib/impact-analyzer.mjs');
@@ -63,6 +71,19 @@ function measureStage(repo, ref) {
     explicitWriteTargets: /writeTargets/.test(impactAnalyzer),
     automaticStopCloseout: /run_auto_closeout|autoCloseoutOnStop/.test(stopHook)
   };
+  const v4TrustControls = {
+    closedOutcomes: files.includes('harness/lib/v4/outcome-engine.mjs'),
+    contentAddressedEvidence: files.includes('harness/lib/v4/evidence-store.mjs'),
+    gitCandidateBinding: files.includes('harness/lib/v4/git-candidate.mjs'),
+    invariantCatalog: files.includes('harness/lib/v4/invariant-catalog.mjs'),
+    independentAuditor: files.includes('harness/auditor/lib/auditor.mjs'),
+    atomicState: files.includes('harness/lib/v4/concurrent-state.mjs'),
+    safeExecutor: files.includes('harness/lib/v4/safe-executor.mjs'),
+    shadowQualification: files.includes('harness/lib/v4/shadow-qualification.mjs'),
+    formalCutover: files.includes('harness/auditor/lib/formal-cutover.mjs'),
+    v4OnlyRuntime: JSON.parse(content('harness/version.json') || '{}').version === '4.0.0'
+      && !files.includes('harness/lib/v4/legacy-v3-adapter.mjs')
+  };
 
   return {
     metrics: {
@@ -71,7 +92,8 @@ function measureStage(repo, ref) {
       assertionOccurrences,
       verifiedControls: Object.values(capabilities).filter(Boolean).length
     },
-    capabilities
+    capabilities,
+    v4TrustControls
   };
 }
 
@@ -84,6 +106,12 @@ function compareStage(expected, observed) {
   for (const key of evidence.capabilityKeys) {
     if (observed.capabilities[key] !== expected.capabilities[key]) {
       throw new Error(`${expected.id} capability mismatch for ${key}: expected ${expected.capabilities[key]}, observed ${observed.capabilities[key]}`);
+    }
+  }
+  for (const key of evidence.v4TrustControlKeys) {
+    if ((expected.v4TrustControls || {})[key] !== undefined
+      && observed.v4TrustControls[key] !== expected.v4TrustControls[key]) {
+      throw new Error(`${expected.id} V4 trust-control mismatch for ${key}: expected ${expected.v4TrustControls[key]}, observed ${observed.v4TrustControls[key]}`);
     }
   }
 }
@@ -121,18 +149,33 @@ function verifyArtifactFloor(files, fileName, expected) {
 }
 
 function verifyEvidenceShape(data) {
-  if (data.schemaVersion !== 1) throw new Error(`Unsupported evidence schema ${data.schemaVersion}.`);
+  if (data.schemaVersion !== 2) throw new Error(`Unsupported evidence schema ${data.schemaVersion}.`);
   if (!Array.isArray(data.stages) || data.stages.length !== 6) throw new Error('Evidence must contain six comparison stages.');
   if (!Array.isArray(data.capabilityKeys) || data.capabilityKeys.length !== 17) throw new Error('Evidence must contain 17 capability keys.');
+  if (!Array.isArray(data.v4TrustControlKeys) || data.v4TrustControlKeys.length !== 10) {
+    throw new Error('Evidence must contain 10 V4 trust-control keys.');
+  }
   for (const stage of data.stages) {
-    if (!/^[a-f0-9]{40}$/.test(stage.commit)) throw new Error(`Invalid commit for ${stage.id}.`);
+    const worktreeStage = stage.sourceVisibility === 'public-repository'
+      && stage.verificationRef === 'WORKTREE'
+      && stage.commit === null;
+    if (!worktreeStage && !/^[a-f0-9]{40}$/.test(stage.commit)) {
+      throw new Error(`Invalid commit for ${stage.id}.`);
+    }
     if (Object.keys(stage.capabilities || {}).length !== data.capabilityKeys.length) throw new Error(`Incomplete capabilities for ${stage.id}.`);
+    if (stage.id === 'v4.0.0'
+      && Object.keys(stage.v4TrustControls || {}).length !== data.v4TrustControlKeys.length) {
+      throw new Error('V4 evidence has an incomplete trust-control inventory.');
+    }
   }
 }
 
 function walkFiles(directory) {
   const out = [];
   for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+    if (entry.isDirectory() && ['.git', 'node_modules', '__pycache__'].includes(entry.name)) {
+      continue;
+    }
     const absolute = path.join(directory, entry.name);
     if (entry.isDirectory()) out.push(...walkFiles(absolute));
     else if (entry.isFile()) out.push(absolute);

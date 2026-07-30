@@ -8,12 +8,8 @@ export function analyzeImpact({ root, taskInfo, contextPack, files, config, base
   const filtered = filterRepoFiles(files, config);
   const changed = includeWorkingTreeChanges ? changedFiles(root, baseRef).filter((f) => filtered.includes(f)) : [];
   const declaredWriteTargets = resolveDeclaredWriteTargets({ root, mentions: taskInfo.fileMentions, files: filtered });
-  const inferredTargets = contextPack.mustRead.filter((f) => !/(^|\/)AGENTS\.md$/i.test(f));
-  const scopedTargets = contextPack.mentionedFiles?.length
-    ? contextPack.mentionedFiles
-    : inferredTargets;
   const directTargets = unique([
-    ...scopedTargets,
+    ...contextPack.mustRead.filter((f) => !/(^|\/)AGENTS\.md$/i.test(f)),
     ...changed
   ]).slice(0, 50);
 
