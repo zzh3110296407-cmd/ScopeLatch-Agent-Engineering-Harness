@@ -201,11 +201,12 @@ Formal activation requires:
   preceding prerequisites are verified; and
 - an independently observed successful formal run for the exact delivery tree.
 
-The repository is currently private and its current GitHub plan does not expose
-branch protection or rulesets through the API. Implementation therefore
-remains fail-closed until the repository owner enables that GitHub capability.
-Changing repository visibility or subscription is outside code authority and
-requires explicit owner action.
+The repository is public, but no accepted branch-protection or ruleset
+observation currently proves that the formal check is externally enforced.
+Implementation therefore remains fail-closed until repository enforcement is
+installed and independently verified. Changing repository enforcement or
+subscription remains outside code authority and requires explicit owner
+action.
 
 ## 9. Rollback
 
