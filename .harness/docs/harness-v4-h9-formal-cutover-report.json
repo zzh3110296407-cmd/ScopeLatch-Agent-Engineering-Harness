@@ -6,7 +6,7 @@
   "predecessor": {
     "milestone": "H8",
     "reportPath": ".harness/docs/harness-v4-h8-ci-shadow-report.json",
-    "reportDigest": "sha256:a062fe7d06f05bd8b99d366344d34280509f145ad92e03fb48ffe94f6de3ce3e",
+    "reportDigest": "sha256:38f67b855dbf39fbf6a3d4f92e1abfbef2d35ed9ea4ebf0b6d2dbf55b4ffd749",
     "infrastructureStatus": "PASS",
     "shadowWindowStatus": "BLOCKED_PENDING_CI_WINDOW"
   },
@@ -19,6 +19,7 @@
     "h8_v4_qualification_remains_active": true,
     "trusted_runner_recomputes_h8_from_raw_observations": true,
     "formal_windows_workflow_is_fail_closed": true,
+    "formal_activation_variable_gate_enforced": true,
     "workflow_toolchain_and_actions_are_pinned": true,
     "candidate_commit_and_tree_are_exactly_bound": true,
     "inherited_remote_observations_are_rejected": true
@@ -92,7 +93,7 @@
     },
     {
       "path": ".github/workflows/harness-v4-formal.yml",
-      "digest": "sha256:6d9b062cb6d7744d0f39c2cc2ddc448468723f138212bfd00771ddde357b9edb"
+      "digest": "sha256:622f3bcedf095e76cc092883064ee72b93f6112c05453b7a9ffee3e4c12be6a9"
     },
     {
       "path": ".harness/docs/harness-v4-only-cutover-spec.md",
@@ -100,11 +101,11 @@
     },
     {
       "path": ".harness/docs/harness-v4-h9-formal-cutover-spec.md",
-      "digest": "sha256:23a22cfd9858b97100afd818198ad376166f83c41eb6134902e8627016b2ddef"
+      "digest": "sha256:c71b5cd2a7a1347a04c32211f85020bc4a05772569bae4357a20c97c49ed7c88"
     },
     {
       "path": ".harness/docs/harness-v4-h9-operations-runbook.md",
-      "digest": "sha256:dff4df2315364c8493f810ea6c6a9f51ba173f4d4b42187089f883847fcff4e3"
+      "digest": "sha256:e2e2d1e7c7099f7fb47422a221349db500e3929aeef94ae3cce4b2db7893f8da"
     },
     {
       "path": ".harness/docs/harness-v4-migration-plan.md",
@@ -112,7 +113,7 @@
     },
     {
       "path": "harness/tests/v4-h9-formal-cutover.test.mjs",
-      "digest": "sha256:1daf5d0c46f597a1a2f774ab7c1b21db7cbf8a0b87ef104e611829e18ba80ecd"
+      "digest": "sha256:440feab6818cd73eef729165528cc2de974023eaf87f0f4525276b8ce2b949e8"
     }
   ],
   "longWindowExclusion": {

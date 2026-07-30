@@ -57,7 +57,9 @@ All prerequisites are mandatory:
 5. The H8 qualification artifact contains the raw, sealed observation set.
 6. GitHub branch protection or an active ruleset requires
    `Harness v4 Formal Attestation` on `main`.
-7. A formal workflow run accepts the exact delivery commit and tree.
+7. Repository variable `HARNESS_V4_FORMAL_ENABLED` is set to `true` only after
+   items 1–6 are independently verified.
+8. A formal workflow run accepts the exact delivery commit and tree.
 
 The long H8 observation window may be deferred for development closeout, but
 it cannot be waived for formal activation.
@@ -96,13 +98,20 @@ After installation, query GitHub directly and verify that the required check
 appears in the effective policy. Do not infer enforcement from the existence
 of `.github/workflows/harness-v4-formal.yml`.
 
+Only after H8 qualification and enforcement are both verified, set repository
+variable `HARNESS_V4_FORMAL_ENABLED=true`. Keep the variable absent or false
+during initial V4 bootstrap. A skipped job while the gate is disabled is not a
+formal attestation and cannot satisfy H9.
+
 Changing repository visibility or purchasing a GitHub plan is an owner
 decision and is outside Harness code authority.
 
 ## 6. Running formal CI
 
 Formal CI is triggered only by `pull_request` or `merge_group`. It has no
-manual-dispatch success path and no `continue-on-error`.
+manual-dispatch success path and no `continue-on-error`. The formal job is
+inactive unless the administrator-controlled
+`HARNESS_V4_FORMAL_ENABLED=true` gate is present.
 
 The workflow:
 

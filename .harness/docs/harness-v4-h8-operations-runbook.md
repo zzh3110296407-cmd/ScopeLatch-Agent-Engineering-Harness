@@ -68,6 +68,13 @@ protected-base adversarial corpus when the trust root changes, and v4 CI twice
 recomputes the cold and cached v4 results before the runner uploads one sealed
 JSON observation from:
 
+For the first V4 installation only, the protected base may still contain V3.
+The workflow detects that condition before invoking the Judge, records a
+separate `BOOTSTRAP_BLOCKED` diagnostic with
+`H8_PROTECTED_BASE_V4_UNAVAILABLE`, and does not create an H8 observation.
+That diagnostic never counts toward the 20-run window. The candidate V4
+runtime must not replace or impersonate the protected-base Judge.
+
 Before validation, CI installs frontend dependencies from the tracked lockfile
 with `npm ci --ignore-scripts --no-audit --no-fund`. Dependency bootstrap is
 the only package-registry step; lifecycle scripts are disabled and every

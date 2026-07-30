@@ -83,6 +83,11 @@ assert.doesNotMatch(formalWorkflowSource, /continue-on-error/);
 assert.doesNotMatch(formalWorkflowSource, /workflow_dispatch:/);
 assert.doesNotMatch(formalWorkflowSource, /uses:\s*[^@\r\n]+@v\d+/);
 assert.match(formalWorkflowSource, /python-version:\s*"3\.12\.10"/);
+assert.match(
+  formalWorkflowSource,
+  /if:\s*\$\{\{\s*vars\.HARNESS_V4_FORMAL_ENABLED == 'true'\s*\}\}/
+);
+assert.match(formalWorkflowSource, /include-hidden-files:\s*true/);
 assert.match(formalWorkflowSource, /--base-ref "\$env:HARNESS_FORMAL_BASE_REF"/);
 assert.doesNotMatch(formalWorkflowSource, /--base-ref "\$\{\{/);
 assert.equal(
@@ -168,6 +173,7 @@ assert.equal(
   Object.values(report.implementationAcceptance).every((value) => value === true),
   true
 );
+assert.equal(report.implementationAcceptance.formal_activation_variable_gate_enforced, true);
 assert.equal(report.implementationStatus, 'PASS');
 assert.equal(
   report.h8Observation.qualifiedRunCount,

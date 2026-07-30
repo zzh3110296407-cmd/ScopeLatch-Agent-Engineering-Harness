@@ -31,6 +31,7 @@ jobs:
     continue-on-error: true
     env:
       HARNESS_SHADOW_BASE_REF: ${{ inputs.base_ref || github.event.pull_request.base.sha || (github.event.before != '0000000000000000000000000000000000000000' && github.event.before) || github.event.repository.default_branch }}
+      HARNESS_SHADOW_CANDIDATE_REF: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
       - name: Enable Git long paths before checkout
         shell: pwsh
@@ -62,12 +63,41 @@ jobs:
         with:
           python-version: "3.12.10"
 
+      - name: Detect protected-base V4 judge
+        id: trust-root
+        shell: pwsh
+        run: |
+          $ready = $false
+          $versionPath = "trusted-engine/harness/version.json"
+          if (Test-Path -LiteralPath $versionPath) {
+            try {
+              $version = Get-Content -Raw -LiteralPath $versionPath | ConvertFrom-Json
+              $major = [int](([string]$version.version).Split(".")[0])
+              $required = @(
+                "trusted-engine/harness/lib/v4",
+                "trusted-engine/harness/auditor/cli.mjs",
+                "trusted-engine/harness/qualification/run-shadow-pair.mjs"
+              )
+              $ready = $major -ge 4 -and @(
+                $required | Where-Object { -not (Test-Path -LiteralPath $_) }
+              ).Count -eq 0
+            } catch {
+              $ready = $false
+            }
+          }
+          "ready=$($ready.ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
+          if (-not $ready) {
+            Write-Output "H8_PROTECTED_BASE_V4_UNAVAILABLE"
+          }
+
       - name: Initialize ignored candidate Harness config
+        if: steps.trust-root.outputs.ready == 'true'
         working-directory: candidate
         run: node ../trusted-engine/harness/cli.mjs init
 
       - name: Run V4 baseline and cold/cached shadow
         id: shadow-pair
+        if: steps.trust-root.outputs.ready == 'true'
         continue-on-error: true
         run: >-
           node trusted-engine/harness/qualification/run-shadow-pair.mjs
@@ -77,12 +107,43 @@ jobs:
           --output ".harness/runs/h8-shadow-observations/${{ github.run_id }}-${{ github.run_attempt }}.json"
 
       - name: Upload immutable shadow observation
-        if: always()
+        if: always() && steps.trust-root.outputs.ready == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: harness-v4-shadow-${{ github.run_id }}-${{ github.run_attempt }}
           path: candidate/.harness/runs/h8-shadow-observations/*.json
           if-no-files-found: error
+          include-hidden-files: true
+          retention-days: 30
+
+      - name: Record protected-base bootstrap block
+        if: always() && steps.trust-root.outputs.ready != 'true'
+        working-directory: candidate
+        shell: pwsh
+        run: |
+          $directory = ".harness/runs/h8-shadow-bootstrap"
+          New-Item -ItemType Directory -Force -Path $directory | Out-Null
+          $record = [ordered]@{
+            schemaVersion = 1
+            status = "BOOTSTRAP_BLOCKED"
+            reasonCode = "H8_PROTECTED_BASE_V4_UNAVAILABLE"
+            baseRef = $env:HARNESS_SHADOW_BASE_REF
+            candidateRef = $env:HARNESS_SHADOW_CANDIDATE_REF
+            qualifiesForH8 = $false
+            formalEligible = $false
+            generatedAt = [DateTime]::UtcNow.ToString("o")
+          }
+          $record | ConvertTo-Json -Depth 10 |
+            Set-Content -Encoding utf8 -LiteralPath "$directory/$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT.json"
+
+      - name: Upload bootstrap-blocked diagnostic
+        if: always() && steps.trust-root.outputs.ready != 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: harness-v4-shadow-bootstrap-${{ github.run_id }}-${{ github.run_attempt }}
+          path: candidate/.harness/runs/h8-shadow-bootstrap/*.json
+          if-no-files-found: error
+          include-hidden-files: true
           retention-days: 30
 
       - name: Declare non-authoritative shadow status

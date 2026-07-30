@@ -16,6 +16,7 @@ concurrency:
 jobs:
   formal:
     name: Harness v4 Formal Attestation
+    if: ${{ vars.HARNESS_V4_FORMAL_ENABLED == 'true' }}
     runs-on: windows-latest
     timeout-minutes: 120
     env:
@@ -166,4 +167,5 @@ jobs:
           name: harness-v4-formal-${{ github.run_id }}-${{ github.run_attempt }}
           path: candidate/.harness/runs/h9-formal/formal-delivery.json
           if-no-files-found: error
+          include-hidden-files: true
           retention-days: 30

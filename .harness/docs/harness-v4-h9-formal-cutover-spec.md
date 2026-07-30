@@ -151,6 +151,12 @@ Until H8 qualification and external enforcement exist, the workflow must fail
 closed with explicit bounded reason codes. It may demonstrate readiness but
 cannot be called a successful formal cutover.
 
+The repository-controlled variable `HARNESS_V4_FORMAL_ENABLED` is the external
+activation gate. It remains absent or false during initial V4 bootstrap. A
+disabled/skipped job emits no attestation and is never formal evidence. The
+variable may be set to `true` only after H8 qualification, required-check
+enforcement and the trusted H8 artifact run ID are independently verified.
+
 ## 7. Acceptance catalog
 
 H9 isolated acceptance must observe all of the following:
@@ -190,7 +196,9 @@ Formal activation requires:
 - H8: 20 qualified GitHub Actions observations spanning at least seven days,
   including one qualified trust-root change;
 - a GitHub protected-branch rule or ruleset requiring the trusted formal
-  check; and
+  check;
+- repository variable `HARNESS_V4_FORMAL_ENABLED=true`, set only after the
+  preceding prerequisites are verified; and
 - an independently observed successful formal run for the exact delivery tree.
 
 The repository is currently private and its current GitHub plan does not expose

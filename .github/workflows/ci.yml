@@ -78,6 +78,7 @@ jobs:
           name: scopelatch-security-report
           path: .harness/security/latest-security-report.json
           if-no-files-found: error
+          include-hidden-files: true
 
   sandbox:
     needs: harness
@@ -99,3 +100,4 @@ jobs:
           name: scopelatch-sandbox-verification
           path: .harness/cache/sandbox/latest-runtime-verification.json
           if-no-files-found: error
+          include-hidden-files: true

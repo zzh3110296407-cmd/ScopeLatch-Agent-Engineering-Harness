@@ -21,6 +21,11 @@ assert.equal(
   2,
   'Every checkout must remove the GitHub credential from the working copy'
 );
+assert.equal(
+  (workflow.match(/include-hidden-files: true/g) || []).length,
+  2,
+  'Every exact .harness artifact upload must include its dot-directory path'
+);
 
 const longPathsIndex = workflow.indexOf('git config --global core.longpaths true');
 const firstCheckoutIndex = workflow.indexOf('uses: actions/checkout@');

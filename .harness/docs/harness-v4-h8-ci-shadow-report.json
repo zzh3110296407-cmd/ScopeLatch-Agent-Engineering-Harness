@@ -31,6 +31,7 @@
     "boundedValidationStepFailureIdentityEnforced": true,
     "canonicalTrackedTextHashingEnforced": true,
     "executorOwnedGitRepositoryConfigurationEnforced": true,
+    "protectedBaseBootstrapGateEnforced": true,
     "windowsGitAndUtf8SemanticsEnforced": true,
     "verifiedCrossVolumeFileOperationsEnforced": true,
     "shadowKnowledgeReadOnlyEnforced": true,
@@ -99,13 +100,13 @@
   "eligibleForH9": false,
   "sourceHashes": {
     ".gitattributes": "sha256:699088dba2d07ccc4381e1cec9d2ded57fc3ae64e62dc6ed1033f84aa4afb1fb",
-    ".github/workflows/harness-v4-shadow.yml": "sha256:ebbb0aeee3f4548cb789814e94cef70f84a33505792a8b939e2233c42125f912",
-    ".harness/docs/harness-v4-h8-operations-runbook.md": "sha256:d0c3be4c14a285346c8524d3b6ae32cbbaf3917ca6c56d2cd20274720c12376d",
+    ".github/workflows/harness-v4-shadow.yml": "sha256:cd8a2b8d22d97cd8e4db0f3dc6fa9f96c29eaa296c2f974cef58e92b3ba0d6fa",
+    ".harness/docs/harness-v4-h8-operations-runbook.md": "sha256:ca1dbf3b752f6cd9e49d5579ab8b527658dbca9937245e68a40785cba56a5b10",
     "harness/contracts/v4/shadow-qualification-policy.json": "sha256:059da4d85a9ba238724b84e55d3c768f1b991aae9567ba8dd578fe56ed1157bf",
     "harness/lib/v4/shadow-qualification.mjs": "sha256:711e52359425eb4c96cf93397bc07a216c9401c397be9bb22e81551fb59ca621",
     "harness/qualification/qualify-shadow-window.mjs": "sha256:7bed7484a800ea664251b7c0c9d280e6dedb1388dc29ee6822d9937c9f42cc72",
     "harness/qualification/run-shadow-pair.mjs": "sha256:49deb5dc301b592c22fc8493f419b64baccf4a704cf57ad0a5163c5e1e56f755",
-    "harness/tests/v4-h8-ci-shadow-qualification.test.mjs": "sha256:d15b0c61d854082c64923f709616d03210136f47c8c95f5baf8423d70e2c0292",
+    "harness/tests/v4-h8-ci-shadow-qualification.test.mjs": "sha256:2308beb94faf9276f4f57337a8c2a143685521a2357fad05a041d94f15ce264d",
     "harness/validators/run.mjs": "sha256:bcf2cdec9b6a45e5fa53fef109c58004e29d66a213b544f7e0ca8cd0faf52628"
   },
   "hardFailures": [
